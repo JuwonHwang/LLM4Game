@@ -6,4 +6,4 @@ class Shop(Base):
         self.units = []
         
     def observe(self):
-        return [u.observe() for u in self.units]
+        return self.units
