@@ -4,6 +4,7 @@ from .item import Item
 from .unit import Unit
 from .game import AutoBattlerGame
 from .player import Player
+from .status import Status
 
 __all__ = [
     "Base", 
@@ -12,4 +13,5 @@ __all__ = [
     "Item", 
     "AutoBattlerGame",
     "Player",
+    "Status"
     ]
