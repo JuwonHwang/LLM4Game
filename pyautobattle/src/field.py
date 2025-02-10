@@ -7,3 +7,10 @@ class Field(Base):
         
     def observe(self):
         return [u.observe() for u in self.units]
+    
+    def count(self, unit_name, unit_level):
+        n = 0
+        for unit in self.units:
+            if unit.name == unit_name and unit.level == unit_level:
+                n += 1
+        return n
