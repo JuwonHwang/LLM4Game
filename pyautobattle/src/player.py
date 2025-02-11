@@ -19,9 +19,11 @@ class Player(Base):
         return {
             "id": self.player_id,
             "name": self.name,
+            "level": self.level,
             "hp": self.hp,
             "field": self.field.observe(),
             "bench": self.bench.observe(),
             "shop": self.shop.observe(),
-            "gold": self.gold
+            "gold": self.gold,
+            "exp": self.exp
         }
