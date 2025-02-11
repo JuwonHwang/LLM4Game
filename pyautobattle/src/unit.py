@@ -1,5 +1,6 @@
 from .active import Active
 from .status import Status
+import json
 
 class Unit(Active):
     def __init__(self, name: str, cost: int, level: int, status: Status, synergy: list[str]):
@@ -21,3 +22,6 @@ class Unit(Active):
             "item": [item.observe() for item in self.items],
             "status": self.status.observe()
         }
+    
+    def get_combat_mode(self):
+        return json.loads(json.dumps(self.observe()))
