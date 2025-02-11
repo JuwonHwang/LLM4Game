@@ -3,6 +3,9 @@ import random
 import numpy as np
 import csv
 
+def logger(t: str):
+    print(t)
+
 def register_unit(game: AutoBattlerGame, unit_csv_file_name: str):
    # Define the path to your CSV file
     file_path = unit_csv_file_name
@@ -79,6 +82,14 @@ def refresh_shop(game: AutoBattlerGame, player: Player):
         game.available_units[cost][chosen_unit] -= 1
         player.shop.units.append((chosen_unit, 1))
 
+def reroll(game: AutoBattlerGame, player: Player):
+    if player.gold < 2:
+        logger(f"{player.name} has not enough gold to reroll.")
+    else:
+        player.gold -= 2
+        refresh_shop(game, player)
+        logger(f"{player.name} rerolled.")
+
 def upgrade(player: Player, unit_name: str, unit_level: int):
     value = (unit_name, unit_level)
     bench_count = player.bench.count(value) 
@@ -98,25 +109,81 @@ def upgrade(player: Player, unit_name: str, unit_level: int):
         player.bench.units.remove(value)
         player.bench.units.remove(value)
 
-def purchase_unit(game: AutoBattlerGame, player: Player, unit_idx: int):
-    if player.shop.units[unit_idx] is None:
-        print(f"{player.name} tried to buy None.")
+def purchase_unit(game: AutoBattlerGame, player: Player, shop_idx: int):
+    if player.shop.units[shop_idx] is None:
+        logger(f"{player.name} tried to buy None.")
         return 
-    unit_name, unit_level = player.shop.units[unit_idx]
+    unit_name, unit_level = player.shop.units[shop_idx]
     purchased_unit = game.unit_dict[unit_name]
     if player.gold < purchased_unit.cost:
-        print(f"{player.name} does not have enough gold.")
+        logger(f"{player.name} does not have enough gold.")
         return
     player.bench.units.append(purchased_unit)
     # Check can upgrade?
     if len(player.bench.units) > player.bench.max_units:
-        print(f"{player.name} does not have enough bench room.")
+        logger(f"{player.name} does not have enough bench room.")
         player.bench.units.pop()
     else:
-        player.shop.units[unit_idx] = None
+        player.shop.units[shop_idx] = None
         player.gold -= purchased_unit.cost
-        print(f"{player.name} purchased {unit_name}.")
+        logger(f"{player.name} purchased {unit_name}.")
     
-def sell_unit(game: AutoBattlerGame, player: Player, unit_idx: int):
-    # To do
-    pass
+def sell_unit(game: AutoBattlerGame, player: Player, bench_idx: int):
+    if len(player.bench.units) <= bench_idx or player.bench.units[bench_idx] is None:
+        logger(f"{player.name} does not have unit at bench index {bench_idx}.")
+    else:
+        _unit = player.bench.units.pop(bench_idx)
+        earn_gold = _unit.cost * (3 ** (_unit.level - 1)) - 1 if _unit.level > 1 else _unit.cost
+        player.gold += earn_gold
+        game.available_units[_unit.cost][_unit.name] += 3 ** (_unit.level - 1)
+        logger(f"{player.name} selled level {_unit.level} - {_unit.name}, earned {earn_gold} gold.")
+
+def bench_to_field(player: Player, bench_idx: int):
+    if len(player.bench.units) <= bench_idx or player.bench.units[bench_idx] is None:
+        logger(f"{player.name} does not have unit at {bench_idx} of bench.")
+    elif len(player.field.units) >= player.field.max_units:
+        logger(f"{player.name}'s field is full.")
+    else:
+        _unit = player.bench.units.pop(bench_idx)
+        player.field.units.append(_unit)
+        logger(f"{player.name} moved {_unit.name} from bench index {bench_idx} to field.")
+
+def field_to_bench(player: Player, field_idx: int):
+    if len(player.field.units) <= field_idx or player.field.units[field_idx] is None:
+        logger(f"{player.name} does not have unit at field index {field_idx}.")
+    elif len(player.bench.units) >= player.bench.max_units:
+        logger(f"{player.name}'s bench is full.")
+    else:
+        _unit = player.field.units.pop(field_idx)
+        player.bench.units.append(_unit)
+        logger(f"{player.name} moved {_unit.name} from field index {field_idx} to bench.")
+
+def get_required_exp(level: int):
+    EXP_LIST = [0,2,2,6,10,20,36,48,76,84]
+    return EXP_LIST[level]
+
+def player_level_up(player: Player):
+    required_exp = get_required_exp(player.level)
+    player.exp -= required_exp
+    player.level += 1
+    logger(f"{player.name}'s level up to level {player.level}")
+
+def purchase_exp(player: Player):
+    if player.level >= 10:
+        logger(f"{player.name}'s level is max.")
+    elif player.gold < 4:
+        logger(f"{player.name}'s gold is not enough to buy EXP.")
+    else:
+        player.gold -= 4
+        player.exp += 4
+        logger(f"{player.name} purchased 4 EXP.")
+        while player.exp >= get_required_exp(player.level):
+            player_level_up(player)
+        
+def give_exp(player: Player, exp_amount: int):
+    if player.level >= 10:
+        logger(f"{player.name}'s level is max.")
+    else:
+        player.exp += exp_amount
+        while player.exp >= get_required_exp(player.level):
+            player_level_up(player)
