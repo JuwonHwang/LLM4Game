@@ -9,10 +9,11 @@ def combat(player1: Player, player2: Player):
     field2 = player2.field.get_combat_mode()
     
     # Combat phase
-    timer = 3000
-    while timer > 0:
-        pass
+    timer = 0
+    while timer < 3000:
+        timer += 1
+        
     # Extended combat phase
-    timer = 1500
-    while timer > 0:
-        pass
+    timer = 0
+    while timer < 1500:
+        timer += 1
