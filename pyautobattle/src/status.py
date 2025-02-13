@@ -1,4 +1,5 @@
 from .base import Base
+import copy
 
 class Status(Base):
     def __init__(
@@ -70,3 +71,21 @@ class Status(Base):
                     self.attackRange - other.attackRange
                 )
         return NotImplemented
+    
+    def __deepcopy__(self, memo):
+        # Create a new instance of Status with deep-copied attributes
+        new_copy = type(self)(
+            self.hp,
+            self.mp,
+            self.attack,
+            self.defense,
+            self.attackSpeed,
+            self.specialAttack,
+            self.specialDefense,
+            self.criticalRate,
+            self.criticalDamage,
+            self.attackRange
+        )
+        # Store the new object in the memo dictionary
+        memo[id(self)] = new_copy
+        return new_copy

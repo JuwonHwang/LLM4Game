@@ -1,6 +1,9 @@
 from .active import Active
 from .status import Status
 import json
+import math
+import random
+import copy
 
 class Unit(Active):
     def __init__(self, name: str, cost: int, level: int, status: Status, synergy: list[str]):
@@ -12,6 +15,9 @@ class Unit(Active):
         self.status = status
         self.additional_status = Status(0,0,0,0,0,0,0,0,0,0)
         self.items = []
+        self.cooldown_time = 0
+        self.mana = 0
+        self.live = True
         
     def observe(self):
         return {
@@ -22,6 +28,51 @@ class Unit(Active):
             "item": [item.observe() for item in self.items],
             "status": self.status.observe()
         }
-    
+
     def get_combat_mode(self):
         return json.loads(json.dumps(self.observe()))
+
+    def die(self):
+        self.live = False
+
+    def update(self):
+        self.cooldown()
+
+    def cooldown(self):
+        self.cooldown_time -= 1 / 100
+
+    def hit(self, other):
+        if not isinstance(other, Unit):
+            raise NotImplementedError("not Unit:", other)
+        is_critical = random.random() < self.status.criticalRate
+        damage_rate = self.status.criticalDamage if is_critical else 1.0
+        defense_rate = math.exp(- other.status.defense / 10)
+        damage = self.status.attack * defense_rate * damage_rate
+        other.status.hp -= damage
+        killed = False
+        if other.status.hp <= 0:
+            other.die()
+            killed = True
+        self.cooldown_time = self.status.attackSpeed
+        return {
+            "damage": damage,
+            "critical": is_critical,
+            "killed": killed
+        }
+    
+    def __deepcopy__(self, memo):
+        # Create a new Unit instance with deep-copied initial values
+        unit_copy = Unit(
+            copy.deepcopy(self.name, memo),
+            copy.deepcopy(self.cost, memo),
+            copy.deepcopy(self.level, memo),
+            copy.deepcopy(self.status, memo),
+            copy.deepcopy(self.synergy, memo)
+        )
+        # Deep copy additional attributes
+        self.cooldown_time = copy.deepcopy(self.cooldown_time, memo)
+        self.mana = copy.deepcopy(self.mana, memo)
+        unit_copy.additional_status = copy.deepcopy(self.additional_status, memo)
+        unit_copy.items = copy.deepcopy(self.items, memo)
+        unit_copy.live = self.live  # boolean value, shallow copy is fine
+        return unit_copy
