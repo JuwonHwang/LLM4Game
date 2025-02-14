@@ -1,9 +1,11 @@
 from .base import Base
 from .unit import Unit
+from .player import Player
+
 class AutoBattlerGame(Base):
     def __init__(self, players, seed=0):
         self.seed = seed
-        self.players = players
+        self.players: list[Player] = players
         self.round = 0
         self.units = []
         self.unit_dict : dict[str, Unit] = dict()
