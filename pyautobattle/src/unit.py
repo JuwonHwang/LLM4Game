@@ -4,6 +4,7 @@ import json
 import math
 import random
 import copy
+from .color import *
 
 class Unit(Active):
     def __init__(self, name: str, cost: int, level: int, status: Status, synergy: list[str]):
@@ -28,6 +29,11 @@ class Unit(Active):
             "item": [item.observe() for item in self.items],
             "status": self.status.observe()
         }
+        
+    def __str__(self):
+        star = star_color(self.level)
+        unit_name = auto_color(f"{self.name:12}", num=self.cost)
+        return ' '.join([star, unit_name])
 
     def get_combat_mode(self):
         return json.loads(json.dumps(self.observe()))
