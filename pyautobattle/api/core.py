@@ -3,6 +3,7 @@ import random
 import numpy as np
 import csv
 import json
+import copy
 
 def print_obs(obs: dict):
     print(json.dumps(obs, indent=4, sort_keys=True))
@@ -14,7 +15,7 @@ def logger(t: str):
     print(t)
 
 def register_unit(game: AutoBattlerGame, unit_csv_file_name: str):
-   # Define the path to your CSV file
+    # Define the path to your CSV file
     file_path = unit_csv_file_name
     # Open and read the CSV file
     with open(file_path, mode='r', newline='', encoding='utf-8') as file:
@@ -66,10 +67,10 @@ def get_appearance_rate(player: Player):
     return appearance_rate
 
 def refresh_shop(game: AutoBattlerGame, player: Player):
-    for value in player.shop.units:
-        if value is None:
+    for u in player.shop.units:
+        if u is None:
             continue
-        unit_name, unit_level = value
+        unit_name, unit_level = u.name, u.level
         cost = game.unit_dict[unit_name].cost
         game.available_units[cost][unit_name] += 1 * (3 ** (unit_level - 1))
     player.shop.units = []
@@ -87,7 +88,7 @@ def refresh_shop(game: AutoBattlerGame, player: Player):
                 unit_pool.append(k)
         chosen_unit = random.choice(unit_pool)
         game.available_units[cost][chosen_unit] -= 1
-        player.shop.units.append((chosen_unit, 1))
+        player.shop.units.append(game.unit_dict[chosen_unit])
 
 def reroll(game: AutoBattlerGame, player: Player):
     if player.gold < 2:
@@ -98,53 +99,81 @@ def reroll(game: AutoBattlerGame, player: Player):
         logger(f"{player.name} rerolled.")
 
 def upgrade(player: Player, unit_name: str, unit_level: int):
-    value = (unit_name, unit_level)
-    bench_count = player.bench.count(value) 
-    field_count = player.field.count(value)
+    bench_count = player.bench.count(unit_name, unit_level) 
+    field_count = player.field.count(unit_name, unit_level) 
     if bench_count + field_count < 3:
-        return
+        return None, None
     if bench_count == 1:
-        player.bench.units.remove(value)
-        player.field.units.remove(value)
-        player.field.units.remove(value)
-    if bench_count == 2:
-        player.bench.units.remove(value)
-        player.bench.units.remove(value)
-        player.field.units.remove(value)
-    if bench_count == 3:
-        player.bench.units.remove(value)
-        player.bench.units.remove(value)
-        player.bench.units.remove(value)
+        player.bench.remove(unit_name, unit_level)
+        player.field.remove(unit_name, unit_level)
+        player.field.remove(unit_name, unit_level)
+    elif bench_count == 2:
+        player.bench.remove(unit_name, unit_level)
+        player.bench.remove(unit_name, unit_level)
+        player.field.remove(unit_name, unit_level)
+    elif bench_count == 3:
+        player.bench.remove(unit_name, unit_level)
+        player.bench.remove(unit_name, unit_level)
+        player.bench.remove(unit_name, unit_level)
+    return unit_name, unit_level + 1
+
+def get_unit(game: AutoBattlerGame, unit_name: str, unit_level: int):
+    _unit = copy.deepcopy(game.unit_dict[unit_name])
+    _unit.level = unit_level
+    _unit.status = Status(
+        hp=_unit.status.hp * 1.6,
+        mp=_unit.status.mp,
+        attack= _unit.status.attack * 1.6,
+        defense= _unit.status.defense * 1.6,
+        attackSpeed= _unit.status.attackSpeed,
+        specialAttack= _unit.status.specialAttack,
+        specialDefense= _unit.status.specialDefense * 1.6,
+        criticalRate= _unit.status.criticalRate,
+        criticalDamage= _unit.status.criticalDamage,
+        attackRange= _unit.status.attackRange
+    )
+    return _unit
 
 def purchase_unit(game: AutoBattlerGame, player: Player, shop_idx: int):
     if player.shop.units[shop_idx] is None:
         logger(f"{player.name} tried to buy None.")
-        return 
-    unit_name, unit_level = player.shop.units[shop_idx]
-    purchased_unit = game.unit_dict[unit_name]
+        return None
+    unit_name = player.shop.units[shop_idx].name
+    purchased_unit = copy.deepcopy(game.unit_dict[unit_name])
     if player.gold < purchased_unit.cost:
         logger(f"{player.name} does not have enough gold.")
-        return
+        return None
     player.bench.units.append(purchased_unit)
-    # Check can upgrade?
+    for i in range(1,4):
+        upgrade_name, upgrade_level = upgrade(player, purchased_unit.name, unit_level=i)
+        if upgrade_name is not None:
+            if not player.field.is_full():
+                player.field.units.append(get_unit(game, upgrade_name, upgrade_level))
+            else:
+                player.bench.units.append(get_unit(game, upgrade_name, upgrade_level))
+            logger(" ".join([player.name, "upgraded", upgrade_name, "to level", str(upgrade_level)]))
     if len(player.bench.units) > player.bench.max_units:
         logger(f"{player.name} does not have enough bench room.")
         player.bench.units.pop()
+        return None
     else:
         player.shop.units[shop_idx] = None
         player.gold -= purchased_unit.cost
         logger(f"{player.name} purchased {unit_name}.")
+        return purchased_unit
     
 def sell_unit(game: AutoBattlerGame, player: Player, bench_idx: int):
     if len(player.bench.units) <= bench_idx or player.bench.units[bench_idx] is None:
         logger(f"{player.name} does not have unit at bench index {bench_idx}.")
+        return None
     else:
         _unit = player.bench.units.pop(bench_idx)
         earn_gold = _unit.cost * (3 ** (_unit.level - 1)) - 1 if _unit.level > 1 else _unit.cost
         player.gold += earn_gold
         game.available_units[_unit.cost][_unit.name] += 3 ** (_unit.level - 1)
         logger(f"{player.name} selled level {_unit.level} - {_unit.name}, earned {earn_gold} gold.")
-
+        return _unit
+        
 def bench_to_field(player: Player, bench_idx: int):
     if len(player.bench.units) <= bench_idx or player.bench.units[bench_idx] is None:
         logger(f"{player.name} does not have unit at {bench_idx} of bench.")
@@ -154,6 +183,8 @@ def bench_to_field(player: Player, bench_idx: int):
         _unit = player.bench.units.pop(bench_idx)
         player.field.units.append(_unit)
         logger(f"{player.name} moved {_unit.name} from bench index {bench_idx} to field.")
+        return _unit
+    return None
 
 def field_to_bench(player: Player, field_idx: int):
     if len(player.field.units) <= field_idx or player.field.units[field_idx] is None:
@@ -164,14 +195,17 @@ def field_to_bench(player: Player, field_idx: int):
         _unit = player.field.units.pop(field_idx)
         player.bench.units.append(_unit)
         logger(f"{player.name} moved {_unit.name} from field index {field_idx} to bench.")
+        return _unit
+    return None
 
 def get_required_exp(level: int):
-    EXP_LIST = [0,2,2,6,10,20,36,48,76,84]
+    EXP_LIST = [0,2,2,6,10,20,36,48,76,84, float("inf")]
     return EXP_LIST[level]
 
 def player_level_up(player: Player):
     required_exp = get_required_exp(player.level)
     player.exp -= required_exp
+    player.field.max_units += 1
     player.level += 1
     logger(f"{player.name}'s level up to level {player.level}")
 
@@ -184,7 +218,7 @@ def purchase_exp(player: Player):
         player.gold -= 4
         player.exp += 4
         logger(f"{player.name} purchased 4 EXP.")
-        while player.exp >= get_required_exp(player.level):
+        while player.level < 10 and player.exp >= get_required_exp(player.level):
             player_level_up(player)
         
 def give_exp(player: Player, exp_amount: int):
@@ -192,5 +226,8 @@ def give_exp(player: Player, exp_amount: int):
         logger(f"{player.name}'s level is max.")
     else:
         player.exp += exp_amount
-        while player.exp >= get_required_exp(player.level):
+        while player.level < 10 and player.exp >= get_required_exp(player.level):
             player_level_up(player)
+            
+def swap_unit(player: Player, index1:int, index2:int):
+    pass
