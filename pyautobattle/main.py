@@ -75,12 +75,13 @@ def main():
                     wrap(game)
                 elif command[1] in ["player"]:
                     wrap(player)
+            elif command[0] in ["battle"]:
+                assert command[1] != "1"
+                combat_result = combat(player, players[int(command[1]) - 1])
+                print(combat_result["winner"], "win")
         except Exception as e:
             action = None
             print("invalid command", e)
-        # Mechanism
-        
-
 
 if __name__ == "__main__":
     main()
