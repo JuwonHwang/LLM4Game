@@ -1,17 +1,12 @@
-from .base import Base, EMPTY
+from .base import EMPTY
 from .unit import Unit
+from .bench import Bench
 import copy
 
-class Field(Base):
+class Field(Bench):
     def __init__(self):
         self.max_units = 1
         self.units: list[Unit] = []
-        
-    def observe(self):
-        return [u.observe() for u in self.units]
-    
-    def is_full(self):
-        return len(self.units) >= self.max_units
     
     def __str__(self):
         field_text = "Field |"
@@ -29,24 +24,11 @@ class Field(Base):
                 row += 1
                 cells.append([])
             cells[row].append(EMPTY)
-        field_text += '|\n      |'.join(['| '.join([str(u) for u in row]) for row in cells])
+        field_text += '|\n      |'.join(['|'.join([str(u) for u in row]) for row in cells])
         return field_text + '|'
     
     def get_combat_mode(self):
         return [u.get_combat_mode() for u in self.units]
-
-    def count(self, unit_name, unit_level):
-        n = 0
-        for unit in self.units:
-            if unit.name == unit_name and unit.level == unit_level:
-                n += 1
-        return n
-    
-    def remove(self, unit_name, unit_level):
-        for unit in self.units:
-            if unit.name == unit_name and unit.level == unit_level:
-                self.units.remove(unit)
-                return unit
     
     def update(self):
         for u in self.units:
