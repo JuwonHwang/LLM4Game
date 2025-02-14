@@ -1,5 +1,6 @@
-from .base import Base
+from .base import Base, EMPTY
 from .unit import Unit
+from .color import yellow
 
 class Shop(Base):
     def __init__(self):
@@ -7,4 +8,9 @@ class Shop(Base):
         self.units: list[Unit] = [None] * self.max_units
         
     def observe(self):
-        return self.units
+        return [u.observe() for u in self.units if u is not None]
+    
+    def __str__(self):
+        unit_text = "Shop  |" + '| '.join([str(u) if u is not None else EMPTY for u in self.units]) + '|'
+        cost_text = "      |" + '| '.join([yellow(f"        ${u.cost}        ") if u is not None else EMPTY for u in self.units]) + '|'
+        return '\n'.join([unit_text, cost_text])
