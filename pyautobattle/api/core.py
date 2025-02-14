@@ -168,7 +168,10 @@ def sell_unit(game: AutoBattlerGame, player: Player, bench_idx: int):
         return None
     else:
         _unit = player.bench.units.pop(bench_idx)
-        earn_gold = _unit.cost * (3 ** (_unit.level - 1)) - 1 if _unit.level > 1 else _unit.cost
+        if _unit.cost == 1:
+            earn_gold = int(_unit.cost * (3 ** (_unit.level - 1)))
+        else:
+            earn_gold = int(_unit.cost * (3 ** (_unit.level - 1)) - 1 if _unit.level > 1 else _unit.cost)
         player.gold += earn_gold
         game.available_units[_unit.cost][_unit.name] += 3 ** (_unit.level - 1)
         logger(f"{player.name} selled level {_unit.level} - {_unit.name}, earned {earn_gold} gold.")
