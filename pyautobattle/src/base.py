@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-EMPTY = " " * 18
+EMPTY = " " * 20
 
 class Base(ABC):
     def __init__(self):

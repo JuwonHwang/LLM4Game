@@ -7,6 +7,9 @@ class Bench(Base):
         self.max_units = 10
         self.units: list[Unit] = []
         
+    def __len__(self):
+        return len(self.units)
+            
     def observe(self):
         return [u.observe() for u in self.units]
     
@@ -42,5 +45,5 @@ class Bench(Base):
                 row += 1
                 cells.append([])
             cells[row].append(EMPTY)
-        text += '|\n      |'.join(['| '.join([str(u) for u in row]) for row in cells])
+        text += '|\n      |'.join(['|'.join([str(u) for u in row]) for row in cells])
         return text + '|'

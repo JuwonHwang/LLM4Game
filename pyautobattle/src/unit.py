@@ -33,7 +33,7 @@ class Unit(Active):
     def __str__(self):
         star = star_color(self.level)
         unit_name = auto_color(f"{self.name:12}", num=self.cost)
-        return ' '.join([star, unit_name])
+        return '[' + ' '.join([star, unit_name]) + ']'
 
     def get_combat_mode(self):
         return json.loads(json.dumps(self.observe()))
@@ -45,23 +45,25 @@ class Unit(Active):
         self.cooldown()
 
     def cooldown(self):
-        self.cooldown_time -= 1 / 100
+        self.cooldown_time -= 1 / 1000
 
     def hit(self, other):
         if not isinstance(other, Unit):
             raise NotImplementedError("not Unit:", other)
-        is_critical = random.random() < self.status.criticalRate
+        is_critical = random.random() < (self.status.criticalRate / 100)
         damage_rate = self.status.criticalDamage if is_critical else 1.0
-        defense_rate = math.exp(- other.status.defense / 10)
+        defense_rate = math.exp(- other.status.defense / 100)
         damage = self.status.attack * defense_rate * damage_rate
         other.status.hp -= damage
+        self.mana += 20
         killed = False
         if other.status.hp <= 0:
             other.die()
             killed = True
-        self.cooldown_time = self.status.attackSpeed
         return {
-            "damage": damage,
+            "attacker": (self.name, id(self)),
+            "defender": (other.name, id(other)),
+            "damage": round(damage),
             "critical": is_critical,
             "killed": killed
         }
