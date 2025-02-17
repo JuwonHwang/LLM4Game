@@ -8,6 +8,20 @@ class AutoBattlerGame(Base):
         self.pool = Pool(unit_file)
         self.players = [Player(i, f"player_{i}", pool=self.pool) for i in range(8)]
         self.round = 0
+    
+    def start(self):
+        for player in self.players:
+            player.gold = 5
+            player.bench.units.append(self.pool.sample(1))
+        for player in self.players:
+            player.refresh_shop()
+        
+    def step(self):
+        for player in self.players:
+            player.refresh_shop()
+            player.get_turn_exp()
+            player.get_turn_gold()
+        self.round += 1
         
     def observe(self):
         return {
