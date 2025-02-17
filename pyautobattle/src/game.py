@@ -1,28 +1,21 @@
 from .base import Base
-from .unit import Unit
 from .player import Player
+from src import *
+from .pool import Pool
 
 class AutoBattlerGame(Base):
-    def __init__(self, players, seed=0):
+    def __init__(self, unit_file, seed=0):
         self.seed = seed
-        self.players: list[Player] = players
+        self.pool = Pool(unit_file)
+        self.players = [Player(i, f"player_{i}", pool=self.pool) for i in range(8)]
         self.round = 0
-        self.units = []
-        self.unit_dict : dict[str, Unit] = dict()
-        self.unit_counts = [0, 22, 20, 17, 10, 9]
-        self.available_units = [
-            {},
-            {},
-            {},
-            {},
-            {},
-            {}
-        ]
         
     def observe(self):
         return {
             "seed": self.seed,
             "players": [p.observe() for p in self.players],
             "round": self.round,
-            "available_units": self.available_units
         }
+    
+    def get_player_by_index(self, index):
+        return self.players[index]
