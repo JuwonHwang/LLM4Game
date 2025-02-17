@@ -11,7 +11,7 @@ class Bench(Base):
         return len(self.units)
             
     def observe(self):
-        return [u.observe() for u in self.units]
+        return self.__str__()
     
     def is_full(self):
         return len(self.units) >= self.max_units

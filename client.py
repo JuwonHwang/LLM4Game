@@ -16,7 +16,7 @@ async def response(data):
 @sio.event
 async def server_response(data):
     os.system('clear')
-    print(data['game'], data['player'])
+    # print(data['game'], data['player'])
     try:
         client_render(data['game'], data['player'])
     except Exception as e:

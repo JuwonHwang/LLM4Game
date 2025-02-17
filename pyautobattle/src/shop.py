@@ -8,7 +8,7 @@ class Shop(Base):
         self.units: list[Unit] = [None] * self.max_units
         
     def observe(self):
-        return [u.observe() for u in self.units if u is not None]
+        return self.__str__()
     
     def clear(self):
         self.units = []
