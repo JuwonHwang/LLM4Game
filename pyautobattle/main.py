@@ -74,7 +74,7 @@ def main():
                     wrap(player)
             elif command[0] in ["battle"]:
                 assert command[1] != "1"
-                combat_result = combat(player, game.get_player_by_index(i[int(command[1]) - 1]))
+                combat_result = combat(player, game.get_player_by_index(int(command[1]) - 1))
                 print(combat_result["winner"], "win")
         except Exception as e:
             action = None
