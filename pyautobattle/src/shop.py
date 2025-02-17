@@ -10,6 +10,9 @@ class Shop(Base):
     def observe(self):
         return [u.observe() for u in self.units if u is not None]
     
+    def clear(self):
+        self.units = []
+
     def __str__(self):
         unit_text = "Shop  |" + '|'.join([str(u) if u is not None else EMPTY for u in self.units]) + '|'
         cost_text = "      |" + '|'.join([yellow(f"         ${u.cost}         ") if u is not None else EMPTY for u in self.units]) + '|'
