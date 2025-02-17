@@ -3,6 +3,7 @@ import json
 from .status import Status
 from .unit import Unit
 import copy
+import random
 
 class Pool:
     def __init__(self, unit_file):
@@ -76,3 +77,12 @@ class Pool:
         cost = _unit.cost
         unit_num = int(3 ** (level - 1))
         self.available_units[cost][name] += unit_num
+        
+    def sample(self, cost: int):
+        unit_pool = []
+        for k,v in self.available_units[cost].items():
+            for _ in range(v):
+                unit_pool.append(k)
+        chosen_unit = self.unit_dict[random.choice(unit_pool)]
+        self.remove_unit(chosen_unit)
+        return chosen_unit
