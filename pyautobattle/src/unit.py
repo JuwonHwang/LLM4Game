@@ -38,6 +38,12 @@ class Unit(Active):
     def get_combat_mode(self):
         return json.loads(json.dumps(self.observe()))
 
+    def get_sell_gold(self):
+        if self.cost == 1:
+            return int(self.cost * (3 ** (self.level - 1)))
+        else:
+            return int(self.cost * (3 ** (self.level - 1)) - 1 if self.level > 1 else self.cost)
+
     def die(self):
         self.live = False
 
