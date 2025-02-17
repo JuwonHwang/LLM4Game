@@ -21,7 +21,7 @@ def render(game: AutoBattlerGame, p: Player, action: str, aux=None):
         print()
     level_text = green(p.level)
     if p.level < 10:
-        exp_text = blue(p.exp) + '/' + str(get_required_exp(p.level))
+        exp_text = blue(p.exp) + '/' + str(p.get_required_exp())
     else:
         exp_text = grey("MAX_LEVEL")
     rank = sorted(game.players, key=lambda _player: _player.hp)
@@ -41,7 +41,7 @@ def render(game: AutoBattlerGame, p: Player, action: str, aux=None):
     print(' | '.join([buy_unit_text, sell_unit_text, move_unit_text]))
     print(' | '.join([buy_exp_text, reroll_text]))
     print("================================================================================================================")
-    appearance_rate_text = "Appearance rate : "+ ' | '.join([auto_color(f"Cost {i+1} (" + str(int(r*100))+ "%)", i+1) for i,r in enumerate(get_appearance_rate(p))])
+    appearance_rate_text = "Appearance rate : "+ ' | '.join([auto_color(f"Cost {i+1} (" + str(int(r*100))+ "%)", i+1) for i,r in enumerate(p.get_appearance_rate())])
     print(appearance_rate_text)
     print("================================================================================================================")
     print(p.shop)
