@@ -4,43 +4,88 @@ import json
 import os
 from pyautobattle.src.render import client_render
 
+class GameClient:
+    def __init__(self, server_url):
+        self.sio = socketio.AsyncClient()
+        self.server_url = server_url
+        self.keymap = {
+            'd': 'reroll',
+            'e': 'sell_unit',
+            'w': 'move',
+            'f': 'buy_exp',
+            'g': 'buy_unit',
+        }
+        self.current_state = None
+        self.register_events()
 
-# 비동기 클라이언트 인스턴스 생성
-sio = socketio.AsyncClient()
+    def register_events(self):
+        @self.sio.event
+        async def connect():
+            print("Connected.")
+            request_task = asyncio.create_task(self.request_game_state())
+            await self.send_commands()
 
-# 서버로부터의 응답을 처리하는 핸들러 정의
-@sio.event
-async def response(data):
-    print(f"서버로부터의 응답: {data}")
+        @self.sio.event
+        async def disconnect():
+            print("Disconnected.")
 
-@sio.event
-async def server_response(data):
-    os.system('clear')
-    # print(data['game'], data['player'])
-    try:
-        client_render(data['game'], data['player'])
-    except Exception as e:
-        print(e)
+        @self.sio.event
+        async def log(data):
+            print(f"ERROR: {data}")
 
-async def send_command():
-    """사용자 명령을 서버로 전송하는 비동기 함수"""
-    while True:
-        command = await asyncio.get_event_loop().run_in_executor(None, input, "Your command: ")
-        if command.lower() == 'exit':
-            print("서버와의 연결을 종료합니다.")
-            await sio.disconnect()
-            break
-        await sio.emit('command', command)
+        @self.sio.event
+        async def render(data):
+            if self.current_state == data:
+                pass
+            else:
+                self.current_state = data
+                self.clear_terminal()
+                try:
+                    client_render(data['game'], data['player'])
+                except Exception as e:
+                    print(e)
+                
+    async def request_game_state(self):
+        while True:
+            await self.sio.sleep(1/30)
+            if self.sio.connected:
+                try:
+                    await self.sio.emit('get_game_state')
+                except Exception as e:
+                    print(e)
 
-async def main():
-    await sio.connect('http://localhost:5000')
-    print("서버에 연결되었습니다.")
+    async def connect_to_server(self):
+        await self.sio.connect(self.server_url)
+        await self.sio.wait()
 
-    # 사용자 명령 전송을 별도의 태스크로 실행
-    send_task = asyncio.create_task(send_command())
+    async def send_commands(self):
+        while True:
+            command = await asyncio.get_event_loop().run_in_executor(None, input, ">>>")
+            command = command.lower()
+            if command == 'exit':
+                await self.sio.disconnect()
+                break
+            elif command == 'start':
+                await self.sio.emit('register_game')
+            elif command == 'quit':
+                await self.sio.emit('quit_game')
+            else:
+                try:
+                    command = command.split()
+                    action = command[0]
+                    if action in self.keymap.keys():
+                        action = self.keymap[action]
+                    if len(command) > 1:
+                        await self.sio.emit(action, data=command[1:])
+                    else:
+                        await self.sio.emit(action)
+                except Exception as e:
+                    print("Invalid command...")
 
-    # 서버로부터의 메시지를 수신하면서 사용자 명령을 처리
-    await send_task
-
+    @staticmethod
+    def clear_terminal():
+        os.system('cls' if os.name == 'nt' else 'clear')
+        
 if __name__ == '__main__':
-    asyncio.run(main())
+    client = GameClient('http://localhost:5000')
+    asyncio.run(client.connect_to_server())
