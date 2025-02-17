@@ -31,14 +31,16 @@ class Player(Base):
             "bench": self.bench.observe(),
             "shop": self.shop.observe(),
             "gold": self.gold,
-            "exp": self.exp
+            "exp": self.exp,
+            "req_exp": self.get_required_exp(),
+            "unit_rate": self.get_appearance_rate()
         }
     
     def get_required_exp(self):
         return self.req_exp_list[self.level]
 
     def player_level_up(self):
-        required_exp = self.get_required_exp(self.level)
+        required_exp = self.get_required_exp()
         self.exp -= required_exp
         self.field.max_units += 1
         self.level += 1
