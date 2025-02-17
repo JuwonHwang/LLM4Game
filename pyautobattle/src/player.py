@@ -20,6 +20,7 @@ class Player(Base):
         self.level = 1
         self.exp = 0
         self.req_exp_list = [0,2,2,6,10,20,36,48,76,84, float("inf")]
+        self.streak = 0
         
     def observe(self):
         return {
@@ -33,7 +34,8 @@ class Player(Base):
             "gold": self.gold,
             "exp": self.exp,
             "req_exp": self.get_required_exp(),
-            "unit_rate": self.get_appearance_rate()
+            "unit_rate": self.get_appearance_rate(),
+            "streak": self.streak
         }
     
     def get_required_exp(self):
@@ -58,13 +60,13 @@ class Player(Base):
             while self.level < 10 and self.exp >= self.get_required_exp():
                 self.player_level_up()
             
-    # def give_exp(self, exp_amount: int):
-    #     if self.level >= 10:
-    #         print(f"{self.name}'s level is max.")
-    #     else:
-    #         self.exp += exp_amount
-    #         while self.level < 10 and self.exp >= self.get_required_exp():
-    #             self.player_level_up()
+    def give_exp(self, exp_amount: int):
+        if self.level >= 10:
+            print(f"{self.name}'s level is max.")
+        else:
+            self.exp += exp_amount
+            while self.level < 10 and self.exp >= self.get_required_exp():
+                self.player_level_up()
 
     def bench_to_field(self, bench_idx: int):
         if len(self.bench.units) <= bench_idx or self.bench.units[bench_idx] is None:
@@ -139,6 +141,20 @@ class Player(Base):
         elif self.level == 10:
             appearance_rate = [0.05, 0.10, 0.20, 0.40, 0.25]
         return appearance_rate
+    
+    def get_turn_gold(self):
+        interest = min(self.gold % 10, 5)
+        streak_gold = 0
+        if abs(self.streak) >= 2: 
+            streak_gold += 1
+        if abs(self.streak) >= 4:
+            streak_gold += 1
+        if abs(self.streak) >= 6:
+            streak_gold += 1
+        self.gold += interest + streak_gold
+    
+    def get_turn_exp(self):
+        self.give_exp(2)
 
     def refresh_shop(self):
         for u in self.shop.units:
