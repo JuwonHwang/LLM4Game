@@ -7,6 +7,15 @@ class Bench(Base):
         self.max_units = 10
         self.units: list[Unit] = []
         
+    def pop(self, index):
+        return self.units.pop(index)
+
+    def insert(self, index, object):
+        if index < self.max_units:
+            self.units.insert(index, object)
+        else:
+            raise ValueError()
+    
     def __len__(self):
         return len(self.units)
             
