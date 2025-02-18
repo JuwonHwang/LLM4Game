@@ -3,6 +3,8 @@ from .player import Player
 from .game import AutoBattlerGame
 import os
 
+CONTOUR = "================================================================================================================"
+
 def render(game: AutoBattlerGame, p: Player, action: str="", aux=None):
     # os.system("cls")
     if action == "Reroll":
@@ -27,11 +29,11 @@ def render(game: AutoBattlerGame, p: Player, action: str="", aux=None):
     rank = sorted(game.players, key=lambda _player: _player.hp)
     rank_text = ' | '.join([pl.name + " (" + red(max(pl.hp,0)) + ")" for pl in game.players])
     print(rank_text)
-    print("================================================================================================================")
+    print(CONTOUR)
     print(p.field)
-    print("================================================================================================================")
+    print(CONTOUR)
     print(p.bench)
-    print("================================================================================================================")
+    print(CONTOUR)
     print("Level:", level_text, "EXP :", exp_text, "Gold :", Gold(p.gold))
     buy_exp_text = ' '.join([blue("(f)"), "Buy EXP", str(Gold(4)), ])
     reroll_text = ' '.join([red("(d)"), "Reroll", str(Gold(2))])
@@ -40,12 +42,12 @@ def render(game: AutoBattlerGame, p: Player, action: str="", aux=None):
     move_unit_text = ' '.join([magenta("(w ? #)"), "Move Unit from ?", grey("(Bench or Field)"), "at #"])
     print(' | '.join([buy_unit_text, sell_unit_text, move_unit_text]))
     print(' | '.join([buy_exp_text, reroll_text]))
-    print("================================================================================================================")
+    print(CONTOUR)
     appearance_rate_text = "Appearance rate : "+ ' | '.join([auto_color(f"Cost {i+1} (" + str(int(r*100))+ "%)", i+1) for i,r in enumerate(p.get_appearance_rate())])
     print(appearance_rate_text)
-    print("================================================================================================================")
+    print(CONTOUR)
     print(p.shop)
-    print("================================================================================================================")
+    print(CONTOUR)
 
 
 def client_render(game: dict, player: dict):
@@ -55,13 +57,14 @@ def client_render(game: dict, player: dict):
     else:
         exp_text = grey("MAX_LEVEL")
     rank = sorted(game["players"], key=lambda _player: _player["hp"])
-    rank_text = ' | '.join([pl["name"] + " (" + red(max(pl["hp"],0)) + ")" for pl in game["players"]])
+    rank_text = '\n'.join([f"{r+1}: " + pl["name"] + " (" + red(max(pl["hp"],0)) + ")" for r, pl in enumerate(rank)])
+    print(CONTOUR)
     print(rank_text)
-    print("================================================================================================================")
+    print(CONTOUR)
     print(player["field"])
-    print("================================================================================================================")
+    print(CONTOUR)
     print(player["bench"])
-    print("================================================================================================================")
+    print(CONTOUR)
     print("Level:", level_text, "EXP :", exp_text, "Gold :", Gold(player["gold"]))
     buy_exp_text = ' '.join([blue("(f)"), "Buy EXP", str(Gold(4)), ])
     reroll_text = ' '.join([red("(d)"), "Reroll", str(Gold(2))])
@@ -70,9 +73,9 @@ def client_render(game: dict, player: dict):
     move_unit_text = ' '.join([magenta("(w ? #)"), "Move Unit from ?", grey("(Bench or Field)"), "at #"])
     print(' | '.join([buy_unit_text, sell_unit_text, move_unit_text]))
     print(' | '.join([buy_exp_text, reroll_text]))
-    print("================================================================================================================")
+    print(CONTOUR)
     appearance_rate_text = "Appearance rate : "+ ' | '.join([auto_color(f"Cost {i+1} (" + str(int(r*100))+ "%)", i+1) for i,r in enumerate(player["unit_rate"])])
     print(appearance_rate_text)
-    print("================================================================================================================")
+    print(CONTOUR)
     print(player["shop"])
-    print("================================================================================================================")
+    print(CONTOUR)
