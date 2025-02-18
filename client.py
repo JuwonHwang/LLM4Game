@@ -11,7 +11,7 @@ class GameClient:
         self.keymap = {
             'd': 'reroll',
             'e': 'sell_unit',
-            'w': 'move',
+            'w': 'move_unit',
             'f': 'buy_exp',
             'g': 'buy_unit',
         }
@@ -76,7 +76,7 @@ class GameClient:
                     if action in self.keymap.keys():
                         action = self.keymap[action]
                     if len(command) > 1:
-                        await self.sio.emit(action, data=command[1:])
+                        await self.sio.emit(action, command[1:])
                     else:
                         await self.sio.emit(action)
                 except Exception as e:
