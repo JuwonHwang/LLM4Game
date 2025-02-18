@@ -5,6 +5,7 @@ import copy
 
 class Field(Bench):
     def __init__(self):
+        super().__init__()
         self.max_units = 1
         self.units: list[Unit] = []
     
