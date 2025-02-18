@@ -16,6 +16,7 @@ class GameClient:
             'g': 'buy_unit',
         }
         self.current_state = None
+        self.playing = False
         self.register_events()
 
     def register_events(self):
@@ -30,8 +31,8 @@ class GameClient:
             print("Disconnected.")
 
         @self.sio.event
-        async def log(data):
-            print(f"ERROR: {data}")
+        async def response(data):
+            print(f"{data}")
 
         @self.sio.event
         async def render(data):
@@ -44,11 +45,28 @@ class GameClient:
                     client_render(data['game'], data['player'])
                 except Exception as e:
                     print(e)
-                
+            
+        @self.sio.event
+        async def lobby(data):
+            if self.current_state == data:
+                pass
+            else:
+                self.current_state = data
+                self.clear_terminal()
+                try:
+                    print('Game ID:', data['game_id'])
+                    players = data['players']
+                    print("--LOBBY--")
+                    for player in players:
+                        print(player)
+                    print("---------")
+                except Exception as e:
+                    print(e)
+
     async def request_game_state(self):
         while True:
             await self.sio.sleep(1/30)
-            if self.sio.connected:
+            if self.sio.connected and self.playing:
                 try:
                     await self.sio.emit('get_game_state')
                 except Exception as e:
@@ -60,18 +78,21 @@ class GameClient:
 
     async def send_commands(self):
         while True:
-            command = await asyncio.get_event_loop().run_in_executor(None, input, ">>>")
+            command = await asyncio.get_event_loop().run_in_executor(None, input, ">>> ")
             command = command.lower()
-            if command == 'exit':
+            command = command.split()
+            if len(command) == 0:
+                pass
+            elif command[0] == 'exit':
                 await self.sio.disconnect()
                 break
-            elif command == 'start':
-                await self.sio.emit('register_game')
-            elif command == 'quit':
+            elif command[0] == 'register':
+                await self.sio.emit('register_game', command[1])
+                self.playing = True
+            elif command[0] == 'quit':
                 await self.sio.emit('quit_game')
             else:
                 try:
-                    command = command.split()
                     action = command[0]
                     if action in self.keymap.keys():
                         action = self.keymap[action]
