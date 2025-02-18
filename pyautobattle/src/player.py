@@ -97,7 +97,11 @@ class Player(Base):
         field_count = self.field.count(unit_name, unit_level) 
         if bench_count + field_count < 3:
             return None, None
-        if bench_count == 1:
+        if bench_count == 0:
+            self.field.remove(unit_name, unit_level)
+            self.field.remove(unit_name, unit_level)
+            self.field.remove(unit_name, unit_level)
+        elif bench_count == 1:
             self.bench.remove(unit_name, unit_level)
             self.field.remove(unit_name, unit_level)
             self.field.remove(unit_name, unit_level)
