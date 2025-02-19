@@ -5,9 +5,8 @@ import copy
 
 class Field(Bench):
     def __init__(self):
-        super().__init__()
         self.max_units = 1
-        self.units: list[Unit] = []
+        self.units: list[Unit] = [None]
     
     def __str__(self):
         field_text = "Field |"
@@ -30,6 +29,10 @@ class Field(Bench):
     
     def get_combat_mode(self):
         return [u.get_combat_mode() for u in self.units]
+    
+    def level_up(self):
+        self.max_units += 1
+        self.units.append(None)
     
     def update(self):
         for u in self.units:

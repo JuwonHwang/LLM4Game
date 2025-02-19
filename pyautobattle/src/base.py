@@ -9,3 +9,7 @@ class Base(ABC):
     @abstractmethod
     def observe(self):
         pass
+    
+    @abstractmethod
+    def to_json(self):
+        pass

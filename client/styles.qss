@@ -1,0 +1,46 @@
+QWidget {
+}
+
+QLabel {
+    background-color:rgb(48, 64, 77);
+    color: white;
+    font-size: 22px;
+    font-weight: bold;
+    padding-bottom: 10px;
+}
+
+QLineEdit {
+    background-color:rgb(84, 112, 134);
+    padding: 8px;
+    border: 2px solidrgb(30, 121, 182);
+    border-radius: 10px;
+    background: white;
+    font-size: 16px;
+}
+
+QTextEdit {
+    color: black;
+    font-size: 16px;
+    padding-bottom: 10px;
+}
+
+QListWidget {
+    background-color:rgb(88, 104, 117);
+    color: white;
+    font-weight: bold;
+    font-size: 18px;
+    padding-bottom: 10px;
+}
+
+QPushButton {
+    background-color:rgb(56, 114, 69); /* 초록색 로그인 버튼 */
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+QPushButton:hover {
+    background-color:rgb(126, 185, 136);
+}

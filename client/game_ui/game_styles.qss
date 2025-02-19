@@ -1,0 +1,21 @@
+QPushButton {
+    background-color: #3498db;
+    color: white;
+    font-size: 16px;
+    padding: 10px;
+    border-radius: 8px;
+}
+
+QPushButton:hover {
+    background-color: #2980b9;
+}
+
+QLabel {
+    background-color:rgb(207, 207, 207);
+    color: black;
+    font-size: bold;
+    padding: 8px;
+    border: 2px solidrgb(30, 121, 182);
+    border-radius: 10px;
+    font-size: 16px;
+}
