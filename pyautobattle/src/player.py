@@ -126,21 +126,47 @@ class Player(Base):
         else:
             target_type = 'field'
             target:Field = self.field
-        if src_idx > source.max_units or trgt_idx > target.max_units:
-            raise ValueError()
-        elif src_idx < 0 or trgt_idx < 0:
-            raise ValueError()
-        try:
-            _unit = source.pop(src_idx)
-            temp = target.units[trgt_idx]
-            target.units[trgt_idx] = _unit
-            source.units[src_idx] = temp
+        if src_idx > source.num_slots or trgt_idx > target.num_slots:
             return {
-                MSG: [f"{self.name} moved {_unit.name} ({source_type},{src_idx})->({target_type},{trgt_idx})"]
+                MSG: [f"{self.name} tried invalid pop or insert"]
+            }
+        elif src_idx < 0:
+            return {
+                MSG: [f"{self.name} tried invalid pop or insert"]
+            }
+        try:
+            source_unit = source.pop(src_idx)
+            if source_unit is None:
+                return {
+                    MSG: [f"{self.name} tried to move none"]
+                }
+            target_unit = target.pop(trgt_idx)
+            if trgt_idx == -1:
+                if target_type == source_type:
+                    source.units[src_idx] = source_unit
+                    return {
+                        MSG: [f"{self.name} invalid move"]
+                    }
+                trgt_idx = target.find_empty()
+            if src_idx == trgt_idx and source_type == target_type:
+                source.units[src_idx] = source_unit
+                return {
+                    MSG: [f"{self.name} move same position"]
+                }
+            elif target.is_full():
+                source.units[src_idx] = source_unit
+                target.units[trgt_idx] = target_unit
+                return {
+                    MSG: [f"{self.name} {target_type} is full"]
+                }
+            target.units[trgt_idx] = source_unit
+            source.units[src_idx] = target_unit
+            return {
+                MSG: [f"{self.name} moved {source_unit.name} ({source_type},{src_idx}) <-> {target_unit.name if target_unit is not None else None} ({target_type},{trgt_idx})"]
             }
         except Exception as e:
             return {
-                MSG: [f"{self.name} tried invalid pop or insert"]
+                MSG: [f"{self.name} move failed due to an unknown reason"]
             }
     
     def upgrade(self, unit_name: str, unit_level: int):
@@ -152,18 +178,22 @@ class Player(Base):
             self.field.remove(unit_name, unit_level)
             self.field.remove(unit_name, unit_level)
             self.field.remove(unit_name, unit_level)
+            self.field.add(self.pool.get_unit(unit_name, unit_level+1))
         elif bench_count == 1:
             self.bench.remove(unit_name, unit_level)
             self.field.remove(unit_name, unit_level)
             self.field.remove(unit_name, unit_level)
+            self.field.add(self.pool.get_unit(unit_name, unit_level+1))
         elif bench_count == 2:
             self.bench.remove(unit_name, unit_level)
             self.bench.remove(unit_name, unit_level)
             self.field.remove(unit_name, unit_level)
+            self.field.add(self.pool.get_unit(unit_name, unit_level+1))
         elif bench_count == 3:
             self.bench.remove(unit_name, unit_level)
             self.bench.remove(unit_name, unit_level)
             self.bench.remove(unit_name, unit_level)
+            self.bench.add(self.pool.get_unit(unit_name, unit_level+1))
         return unit_name, unit_level + 1
     
     def reroll(self):
@@ -256,17 +286,16 @@ class Player(Base):
                 if self.bench.count(unit_name, 1) >= 2:
                     self.bench.remove(unit_name,1)
                     self.bench.remove(unit_name,1)
+                    self.bench.add(self.pool.get_unit(unit_name, 2))
                 elif self.bench.count == 1:
                     self.bench.remove(unit_name,1)
                     self.field.remove(unit_name,1)
-                else:
-                    self.field.remove(unit_name,1)
-                    self.field.remove(unit_name,1)
-                if not self.field.is_full():
                     self.field.add(self.pool.get_unit(unit_name, 2))
                 else:
-                    self.bench.add(self.pool.get_unit(unit_name, 2))
-                messages.append(f"{self.name} upgrade {unit_name} to level {upgrade_level}")
+                    self.field.remove(unit_name,1)
+                    self.field.remove(unit_name,1)
+                    self.field.add(self.pool.get_unit(unit_name, 2))
+                messages.append(f"{self.name} upgrade {unit_name} to level 2")
             else:
                 return {
                     MSG: [f"{self.name} does not have enough bench room."]
@@ -276,10 +305,6 @@ class Player(Base):
         for i in range(1,4):
             upgrade_name, upgrade_level = self.upgrade(purchased_unit.name, unit_level=i)
             if upgrade_name is not None:
-                if not self.field.is_full():
-                    self.field.add(self.pool.get_unit(upgrade_name, upgrade_level))
-                else:
-                    self.bench.add(self.pool.get_unit(upgrade_name, upgrade_level))
                 messages.append(f"{self.name} upgrade {upgrade_name} to level {upgrade_level}")
         messages.append(f"{self.name} successfully bought {unit_name}.")
         return {

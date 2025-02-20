@@ -34,6 +34,7 @@ class Unit(Active):
         return {
             "name": self.name,
             "cost": self.cost,
+            "price": self.get_sell_gold(),
             "level": self.level,
             "synergy": self.synergy,
             "item": [item.to_json() for item in self.items],
@@ -64,7 +65,7 @@ class Unit(Active):
             raise NotImplementedError("not Unit:", other)
         is_critical = random.random() < (self.status.criticalRate / 100)
         damage_rate = self.status.criticalDamage if is_critical else 1.0
-        defense_rate = math.exp(- other.status.defense / 100)
+        defense_rate = 100 / (100 + other.status.defense)
         damage = self.status.attack * defense_rate * damage_rate
         other.status.hp -= damage
         self.mana += 20

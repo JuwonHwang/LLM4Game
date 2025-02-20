@@ -5,6 +5,7 @@ import copy
 class Bench(Base):
     def __init__(self):
         self.max_units = 9
+        self.num_slots = 9
         self.units: list[Unit] = [None] * self.max_units
         
     def find_empty(self):
@@ -62,21 +63,3 @@ class Bench(Base):
                     self.units[i] = None
                     return unit
     
-    def __str__(self):
-        text = "Bench |"
-        col = 0
-        row = 0
-        cells = [[]]
-        for u in self.units:
-            if len(cells[row]) == 5:
-                row += 1
-                cells.append([])
-            cells[row].append(u)
-        num_empty = self.max_units - len(self.units)
-        for i in range(num_empty):
-            if len(cells[row]) == 5:
-                row += 1
-                cells.append([])
-            cells[row].append(EMPTY)
-        text += '|\n      |'.join(['|'.join([str(u) for u in row]) for row in cells])
-        return text + '|'

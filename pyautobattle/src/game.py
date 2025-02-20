@@ -4,10 +4,10 @@ from .pool import Pool
 import time
 
 class AutoBattlerGame(Base):
-    def __init__(self, game_id, unit_file='pyautobattle/data/unit.csv', seed=0):
+    def __init__(self, game_id, unit_file='pyautobattle/data/unit.csv', synergy_file='pyautobattle/data/synergy.json', seed=0):
         self.game_id = game_id
         self.seed = seed
-        self.pool = Pool(unit_file)
+        self.pool = Pool(unit_file, synergy_file)
         self.round = 0
         self.timer = 0
         self.players: list[Player] = []
