@@ -45,7 +45,8 @@ class LoginScreen(BaseWidget):
         username = self.username_input.text()
         if username:
             print(f"Logging in as {username}...")
-            self.parent.run_async(self.parent.socket_thread.send_command("login", username))
-            self.parent.stacked_widget.setCurrentWidget(self.parent.home_screen)
+            if self.parent.socket_thread.sio.connected:
+                self.parent.run_async(self.parent.socket_thread.send_command("login", username))
+                self.parent.stacked_widget.setCurrentWidget(self.parent.home_screen)
         else:
             print("Please enter a username")

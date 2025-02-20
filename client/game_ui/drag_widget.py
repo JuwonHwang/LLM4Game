@@ -1,17 +1,19 @@
-from PyQt6.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout
-from PyQt6.QtCore import Qt, QMimeData, QByteArray
+from PyQt6.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout, QPushButton
+from PyQt6.QtCore import Qt, QMimeData, QByteArray, QEvent
 from PyQt6.QtGui import QDrag, QPixmap, QPainter
 import json
 
-class DraggableLabel(QLabel):
-    def __init__(self, text, source='bench', index=-1):
+class DraggableLabel(QPushButton):
+    def __init__(self, text, source='bench', index=-1, dragable=True):
         super().__init__(text)
         self.source = source
         self.index = index
+        self.dragable = dragable
         self.setAcceptDrops(True)  # Accept drops
+        # self.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
     def mouseMoveEvent(self, event):
-        if event.buttons() == Qt.MouseButton.LeftButton:
+        if event.buttons() == Qt.MouseButton.LeftButton and self.dragable:
             drag = QDrag(self)
             mime_data = QMimeData()
             mime_data.setText(self.text())
@@ -33,6 +35,7 @@ class DraggableLabel(QLabel):
         pixmap = QPixmap(self.size())
         pixmap.fill(Qt.GlobalColor.transparent)  # Transparent background
         painter = QPainter(pixmap)
+        painter.setOpacity(0.5)
         self.render(painter)  # Render the label onto the pixmap
         painter.end()
         return pixmap
@@ -45,5 +48,6 @@ class DraggableLabel(QLabel):
         data = event.mimeData().data("application/json").data().decode("utf-8")
         data = json.loads(data)
         data["target_index"] = self.index
+        self.parent().parent.refresh_style()
         self.parent().dropped(data)
         event.acceptProposedAction()

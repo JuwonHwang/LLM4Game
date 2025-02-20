@@ -24,15 +24,22 @@ class SocketThread(QThread):
         self.loop.run_until_complete(self.connect_to_server())
 
     async def connect_to_server(self):
-        await self.sio.connect(self.server_url)
-        await self.sio.wait()
+        while True:
+            try:
+                await self.sio.connect(self.server_url)
+                await self.sio.wait()
+                break
+            except (socketio.exceptions.ConnectionError, asyncio.TimeoutError) as e:
+                await asyncio.sleep(1)
 
     async def send_command(self, action, params=None):
-        print(action,params)
-        if params is not None:
-            await self.sio.emit(action, params)
-        else:
-            await self.sio.emit(action)
+        if self.sio.connected:
+            if params is not None:
+                await self.sio.emit(action, params)
+            else:
+                await self.sio.emit(action)
+            return True
+        return False
             
     def register_events(self):
         @self.sio.event

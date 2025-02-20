@@ -28,8 +28,9 @@ class LobbyScreen(BaseWidget):
         self.setLayout(layout)
     
     def start_game(self):
-        self.parent.run_async(self.parent.socket_thread.send_command("start_game"))
-        self.parent.stacked_widget.setCurrentWidget(self.parent.game_screen)
+        v = self.parent.run_async(self.parent.socket_thread.send_command("start_game"))
+        if v:
+            self.parent.stacked_widget.setCurrentWidget(self.parent.game_screen)
         
     def update_state(self, data):
         if 'game_id' in data.keys():
@@ -40,5 +41,6 @@ class LobbyScreen(BaseWidget):
     def update_user_list(self, users):
         self.user_list.clear()
         for user in users:
-            # print(user)
-            self.user_list.addItem(user)
+            user_id = user['user_id']
+            score = user['score']
+            self.user_list.addItem(f"{user_id} (score: {score})")

@@ -12,6 +12,22 @@ class BaseWidget(QWidget):
     def __init__(self, stylesheet_path="client/styles.qss"):
         super().__init__()
         self.load_stylesheet(stylesheet_path)
+        self.color_map = [
+            "#A4A4A4",  
+            "#413a41",  
+            "#173f29",  
+            "#3498db",  
+            "#9b59b6",  
+            "#f1c40f"   
+        ]
+        self.hover_color_map = [
+            "#A4A4A4",  
+            "#615a61",  
+            "#375f49",  
+            "#5dade2",  
+            "#af7ac5",  
+            "#f4d03f"   
+        ]
             
     def load_stylesheet(self, file_path):
         try:

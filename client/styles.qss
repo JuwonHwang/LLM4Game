@@ -32,8 +32,18 @@ QListWidget {
     padding-bottom: 10px;
 }
 
+QListWidget::item {
+    padding: 5px;
+    background-color:rgb(169, 180, 189);
+    border: 2px solid black;
+    border-radius: 5px;
+    color: white;
+    font-weight: bold;
+    font-size: 18px;
+}
+
 QPushButton {
-    background-color:rgb(56, 114, 69); /* 초록색 로그인 버튼 */
+    background-color:rgb(56, 114, 69);
     color: white;
     font-size: 18px;
     font-weight: bold;
@@ -44,3 +54,4 @@ QPushButton {
 QPushButton:hover {
     background-color:rgb(126, 185, 136);
 }
+

@@ -1,21 +1,22 @@
-QPushButton {
-    background-color: #3498db;
-    color: white;
-    font-size: 16px;
-    padding: 10px;
-    border-radius: 8px;
-}
-
-QPushButton:hover {
-    background-color: #2980b9;
-}
-
 QLabel {
-    background-color:rgb(207, 207, 207);
-    color: black;
+    background-color:rgb(124, 124, 124);
+    color: white;
     font-size: bold;
-    padding: 8px;
-    border: 2px solidrgb(30, 121, 182);
+    padding: 24px;
     border-radius: 10px;
-    font-size: 16px;
+    font-size: 24px;
+}
+
+QPushButton {
+    background-color:#A4A4A4;
+    color: white;
+    font-size: 12px;
+    min-width: 100px;
+    max-width: 100px;
+    min-height: 40px;
+    max-height: 40px;
+    padding: 4px;
+    border-radius: 10px;
+    border: 0px solid transparent;
+    margin: 0px;
 }

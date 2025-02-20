@@ -20,7 +20,7 @@ class HomeScreen(BaseWidget):
         self.btn_register = QPushButton("🆕 Register Game")
         self.btn_register.clicked.connect(self.register_game)
         
-        layout.addWidget(QLabel("🎮 Available Games:"))
+        layout.addWidget(QLabel("🎮 Available Games"))
         layout.addWidget(self.game_list)
         layout.addWidget(self.btn_register)
         
@@ -32,8 +32,9 @@ class HomeScreen(BaseWidget):
         else:
             current_time = datetime.now().strftime("%Y%m%d_%H%M%S_")
             game_id = current_time + str(len(self.game_list))
-        self.parent.run_async(self.parent.socket_thread.send_command("register_game", game_id))
-        self.parent.stacked_widget.setCurrentWidget(self.parent.lobby_screen)
+        v = self.parent.run_async(self.parent.socket_thread.send_command("register_game", game_id))
+        if v:
+            self.parent.stacked_widget.setCurrentWidget(self.parent.lobby_screen)
     
     def update_state(self, data):
         if 'games' in data.keys():

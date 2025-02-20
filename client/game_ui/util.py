@@ -1,3 +1,5 @@
+import unicodedata
+
 def unit_to_shop_text(unit: dict):
     if unit is None:
         return "\n"
@@ -5,12 +7,17 @@ def unit_to_shop_text(unit: dict):
     level = unit['level']
     star = '⭐'* level
     cost = unit['cost']
-    return f"🪙{cost}\n{star} {name}"
+    emo = unicodedata.lookup(name)
+    return f"{cost}🪙 {star}\n{emo} {name}"
 
 def unit_to_text(unit: dict):
     if unit is None:
-        return ""
+        return "\n"
     name = unit['name']
     level = unit['level']
     star = '⭐'* level
-    return f"{star} {name}"
+    try:
+        emo = unicodedata.lookup(name)
+    except:
+        emo = ''
+    return f"{star}\n{emo} {name}"
