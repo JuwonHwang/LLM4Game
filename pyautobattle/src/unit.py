@@ -4,7 +4,7 @@ import json
 import math
 import random
 import copy
-from .color import *
+# from .color import *
 
 class Unit(Active):
     def __init__(self, name: str, cost: int, level: int, status: Status, synergy: list[str]):
@@ -29,14 +29,27 @@ class Unit(Active):
             "item": [item.observe() for item in self.items],
             "status": self.status.observe()
         }
-        
-    def __str__(self):
-        star = star_color(self.level)
-        unit_name = auto_color(f"{self.name:12}", num=self.cost)
-        return '[' + ' '.join([star, unit_name]) + ']'
+
+    def to_json(self):
+        return {
+            "name": self.name,
+            "cost": self.cost,
+            "price": self.get_sell_gold(),
+            "level": self.level,
+            "synergy": self.synergy,
+            "item": [item.to_json() for item in self.items],
+            "mana": self.mana,
+            "status": self.status.to_json()
+        }
 
     def get_combat_mode(self):
         return json.loads(json.dumps(self.observe()))
+
+    def get_sell_gold(self):
+        if self.cost == 1:
+            return int(self.cost * (3 ** (self.level - 1)))
+        else:
+            return int(self.cost * (3 ** (self.level - 1)) - 1 if self.level > 1 else self.cost)
 
     def die(self):
         self.live = False
@@ -52,7 +65,7 @@ class Unit(Active):
             raise NotImplementedError("not Unit:", other)
         is_critical = random.random() < (self.status.criticalRate / 100)
         damage_rate = self.status.criticalDamage if is_critical else 1.0
-        defense_rate = math.exp(- other.status.defense / 100)
+        defense_rate = 100 / (100 + other.status.defense)
         damage = self.status.attack * defense_rate * damage_rate
         other.status.hp -= damage
         self.mana += 20

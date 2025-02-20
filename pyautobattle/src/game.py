@@ -1,28 +1,62 @@
 from .base import Base
-from .unit import Unit
 from .player import Player
+from .pool import Pool
+import time
 
 class AutoBattlerGame(Base):
-    def __init__(self, players, seed=0):
+    def __init__(self, game_id, unit_file='pyautobattle/data/unit.csv', synergy_file='pyautobattle/data/synergy.json', seed=0):
+        self.game_id = game_id
         self.seed = seed
-        self.players: list[Player] = players
+        self.pool = Pool(unit_file, synergy_file)
         self.round = 0
-        self.units = []
-        self.unit_dict : dict[str, Unit] = dict()
-        self.unit_counts = [0, 22, 20, 17, 10, 9]
-        self.available_units = [
-            {},
-            {},
-            {},
-            {},
-            {},
-            {}
-        ]
+        self.timer = 0
+        self.players: list[Player] = []
+        self.current_players = set()
+        self.running = False
+
+    def register(self, user_id):
+        self.current_players.add(user_id)
+
+    def quit(self, user_id):
+        self.current_players.discard(user_id)
+        return len(self.current_players)
+
+    def start(self):
+        for user_id in list(self.current_players):
+            self.players.append(Player(user_id, f"{user_id}", pool=self.pool))
+        while len(self.players) < 8:
+            i = len(self.players)
+            self.players.append(Player(f"{self.game_id}-{i}", f"{self.game_id}-{i}", pool=self.pool))
+        for player in self.players:
+            player.gold = 100
+            player.bench.add(self.pool.sample(1))
+        for player in self.players:
+            player.refresh_shop()
+        self.running = True
+        
+    def step(self):
+        for player in self.players:
+            player.refresh_shop()
+            player.get_turn_exp()
+            player.get_turn_gold()
+        self.round += 1
         
     def observe(self):
         return {
-            "seed": self.seed,
             "players": [p.observe() for p in self.players],
             "round": self.round,
-            "available_units": self.available_units
         }
+        
+    def to_json(self):
+        return {
+            "players": [p.to_json() for p in self.players]
+        }
+    
+    def get_player_by_index(self, index):
+        return self.players[index]
+    
+    def get_player_by_user_id(self, user_id):
+        for player in self.players:
+            if player.player_id == user_id:
+                return player
+        return None

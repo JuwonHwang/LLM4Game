@@ -6,29 +6,19 @@ import copy
 class Field(Bench):
     def __init__(self):
         self.max_units = 1
-        self.units: list[Unit] = []
-    
-    def __str__(self):
-        field_text = "Field |"
-        col = 0
-        row = 0
-        cells = [[]]
-        for u in self.units:
-            if len(cells[row]) == 5:
-                row += 1
-                cells.append([])
-            cells[row].append(u)
-        num_empty = self.max_units - len(self.units)
-        for i in range(num_empty):
-            if len(cells[row]) == 5:
-                row += 1
-                cells.append([])
-            cells[row].append(EMPTY)
-        field_text += '|\n      |'.join(['|'.join([str(u) for u in row]) for row in cells])
-        return field_text + '|'
+        self.num_slots = 4 * 7
+        self.units: list[Unit] = [None] * self.num_slots
+        
+    def is_full(self):
+        nones = self.units.count(None)
+        return self.num_slots - nones >= self.max_units
     
     def get_combat_mode(self):
         return [u.get_combat_mode() for u in self.units]
+    
+    def level_up(self):
+        self.max_units += 1
+        # self.units.append(None)
     
     def update(self):
         for u in self.units:

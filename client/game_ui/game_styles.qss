@@ -1,0 +1,22 @@
+QLabel {
+    background-color:rgb(124, 124, 124);
+    color: white;
+    font-size: bold;
+    padding: 24px;
+    border-radius: 10px;
+    font-size: 24px;
+}
+
+QPushButton {
+    background-color:#A4A4A4;
+    color: white;
+    font-size: 12px;
+    min-width: 100px;
+    max-width: 100px;
+    min-height: 40px;
+    max-height: 40px;
+    padding: 4px;
+    border-radius: 10px;
+    border: 0px solid transparent;
+    margin: 0px;
+}

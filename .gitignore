@@ -171,3 +171,5 @@ cython_debug/
 .pypirc
 .vscode
 .server
+/db
+/qt-ui

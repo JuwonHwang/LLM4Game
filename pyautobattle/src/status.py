@@ -39,6 +39,20 @@ class Status(Base):
             "criticalDamage": self.criticalDamage,
             "attackRange": self.attackRange,
         }
+        
+    def to_json(self):
+        return {
+            "hp": self.hp,
+            "mp": self.mp,
+            "attack": self.attack,
+            "defense": self.defense,
+            "attackSpeed": self.attackSpeed,
+            "specialAttack": self.specialAttack,
+            "specialDefense": self.specialDefense,
+            "criticalRate": self.criticalRate,
+            "criticalDamage": self.criticalDamage,
+            "attackRange": self.attackRange,
+        }
     
     def __add__(self, other):
         if isinstance(other, Status):
