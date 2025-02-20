@@ -81,16 +81,13 @@ class GameUI(QWidget):
             pass
 
     def run_async(self, coroutine):
-        asyncio.run_coroutine_threadsafe(coroutine, self.loop)
+        return asyncio.run_coroutine_threadsafe(coroutine, self.loop)
 
-# ===========================
-# 🚀 6️⃣ PyQt 실행
-# ===========================
 if __name__ == "__main__":
-    loop = asyncio.new_event_loop()  # 새로운 이벤트 루프 생성
+    loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
 
     app = QApplication(sys.argv)
-    game_ui = GameUI(loop)  # 기존 루프를 UI에 전달
+    game_ui = GameUI(loop) 
     game_ui.show()
     sys.exit(app.exec())
