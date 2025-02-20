@@ -79,6 +79,7 @@ class GameServer:
         
         await self.log(sid, f'User {user_id} logged in')
         await self.sio.emit('update_home', {"user": self.user_info[user_id], 'games': list(self.games.keys())}, to=sid)
+        return True
     
     def save_user_db(self):
         with open(self.user_db_path, 'w', encoding='utf-8') as file:
@@ -88,7 +89,7 @@ class GameServer:
         user_id = await self.get_user_id(sid)
         if not user_id:
             await self.sio.emit('response', 'You must log in before registering a game', to=sid)
-            return
+            return False
 
         if game_id not in self.games:
             self.games[game_id] = AutoBattlerGame(game_id)
@@ -97,7 +98,7 @@ class GameServer:
             await self.sio.emit('response', f'Game {game_id} created', to=sid)
         elif self.games[game_id].running:
             await self.sio.emit('response', 'The game is already started', to=sid)
-            return
+            return False
         game = self.games[game_id]
         game.register(user_id)
         self.rooms[game_id].append(sid)
@@ -105,10 +106,11 @@ class GameServer:
         self.user_info[user_id]['player_id'] = len(game.current_players)
         if len(game.current_players) > 8:
             await self.sio.emit('response', 'ERROR: Max # of players reached', to=sid)
-            return
+            return False
         else:
             await self.send_lobby_state(game_id)
             await self.send_home_state()
+            return True
     
     async def start_game(self, sid, game_id=None):
         user_id = await self.get_user_id(sid)
@@ -117,9 +119,12 @@ class GameServer:
         if game_id and game_id in self.games:
             self.games[game_id].start()
             await self.send_game_state(game_id)
+            await self.send_home_state()
             await self.log(sid, f"game {game_id} start")
+            return True
         else:
             await self.sio.emit('response', 'ERROR: Invalid game ID', to=sid)
+            return False
     
     async def send_game_state(self, game_id):
         for sid in self.rooms[game_id]:
@@ -130,13 +135,16 @@ class GameServer:
             }, to=sid)
     
     async def send_lobby_state(self, game_id):
-        state = {'game_id': game_id, 'players': list(self.games[game_id].current_players)}
+        user_ids = list(self.games[game_id].current_players)
+        player_info = [{'user_id': user_id, 'score': self.user_info[user_id]['score']} for user_id in user_ids]
+        state = {'game_id': game_id, 'players': player_info}
         for sid in self.rooms[game_id]:
             await self.sio.emit('update_lobby', state, to=sid)
     
     async def send_home_state(self):
+        game_ids = list(self.games.keys())
         for sid in self.clients:
-            await self.sio.emit('update_home', {'games': list(self.games.keys())}, to=sid)
+            await self.sio.emit('update_home', {'games': [game_id for game_id in game_ids if not self.games[game_id].running]}, to=sid)
     
     async def send_user_state(self, sid):
         uid_by_sid = await self.get_user_id(sid) 
@@ -144,6 +152,8 @@ class GameServer:
     
     async def remove_game(self, game_id):
         for sid in self.rooms[game_id]:
+            await self.sio.emit('update_game', {}, to=sid)
+            # print(sid)
             await self.sio.emit('quit', to=sid)
         await self.log('server', f"game {game_id} removed")
     
@@ -161,35 +171,39 @@ class GameServer:
                 await self.send_home_state()
             else:
                 self.rooms[game_id].remove(sid)
-                self.sio.emit('quit', to=sid)
+                await self.sio.emit('quit', to=sid)
             await self.log(sid, f'Player {user_id} quit game {game_id}')
+        return True
 
     async def reroll(self, sid):
-        await self.player_action(sid, 'reroll')
+        return await self.player_action(sid, 'reroll')
     
     async def buy_exp(self, sid):
-        await self.player_action(sid, 'purchase_exp')
+        return await self.player_action(sid, 'purchase_exp')
     
     async def buy_unit(self, sid, index):
-        await self.player_action(sid, 'purchase_unit', index)
+        return await self.player_action(sid, 'purchase_unit', index)
     
     async def sell_unit(self, sid, index):
-        await self.player_action(sid, 'sell_unit', index)
+        return await self.player_action(sid, 'sell_unit', index)
     
     async def move_unit(self, sid, *data):
-        await self.player_action(sid, 'move_unit', data[0], data[1], data[2], data[3])
+        return await self.player_action(sid, 'move_unit', data[0], data[1], data[2], data[3])
     
     async def money(self, sid):
-        await self.player_action(sid, 'add_gold', 100)
+        return await self.player_action(sid, 'add_gold', 100)
     
     async def player_action(self, sid, action, *args):
         player = await self.get_player(sid)
         if player:
             method = getattr(player, action, None)
             if method:
-                await self.log(sid, method(*args))
+                message = method(*args)
+                await self.log(sid, message)
                 game_id = await self.get_game_id(sid)
                 await self.send_game_state(game_id)
+                return message
+        return False
     
     async def get_user_id(self, sid):
         return self.sid_to_user.get(sid)
