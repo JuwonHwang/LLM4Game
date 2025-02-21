@@ -184,8 +184,8 @@ class GameServer:
     async def buy_unit(self, sid, index):
         return await self.player_action(sid, 'purchase_unit', index)
     
-    async def sell_unit(self, sid, index):
-        return await self.player_action(sid, 'sell_unit', index)
+    async def sell_unit(self, sid, source_type, index):
+        return await self.player_action(sid, 'sell_unit', source_type, index)
     
     async def move_unit(self, sid, *data):
         return await self.player_action(sid, 'move_unit', data[0], data[1], data[2], data[3])

@@ -311,13 +311,18 @@ class Player(Base):
             MSG: messages
         }
         
-    def sell_unit(self, bench_idx: int):
-        if len(self.bench.units) <= bench_idx or self.bench.units[bench_idx] is None:
+    def sell_unit(self, source_type, index: int):
+        source = None
+        if source_type in ['bench', 'b']:
+            source = self.bench
+        else:
+            source = self.field
+        if source.units[index] is None:
             return {
-                MSG: [f"{self.name} does not have unit at bench index {bench_idx}."]
+                MSG: [f"{self.name} does not have unit at {source_type} index {index}."]
             }
         else:
-            _unit = self.bench.pop(bench_idx)
+            _unit = source.pop(index)
             earn_gold = _unit.get_sell_gold()
             self.gold += earn_gold
             self.pool.add_unit(_unit)
