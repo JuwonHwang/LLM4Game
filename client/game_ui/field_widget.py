@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QApplication, QGridLayout, QWidget, QHBoxLayout, QPushButton, QVBoxLayout, QLabel
+from PyQt6.QtWidgets import QApplication, QStackedWidget, QGridLayout, QWidget, QHBoxLayout, QPushButton, QVBoxLayout, QLabel
 
 from ..game_ui.util import unit_to_text
 from ..baseWidget import BaseWidget
@@ -14,10 +14,23 @@ class FieldWidget(BaseWidget):
         self.right_label = QLabel()
         main_layout.addWidget(self.left_label)
         
+        self.field_page = QWidget()
+        self.battle_page = QWidget()
+        self.stacked_widget = QStackedWidget()
+
         self.unit_layout = QGridLayout()
+        self.field_page.setLayout(self.unit_layout)
+        self.battle_layout = QGridLayout()
+        self.battle_page.setLayout(self.battle_layout)
+
+        self.stacked_widget.addWidget(self.field_page)
+        self.stacked_widget.addWidget(self.battle_page)
+
+        self.stacked_widget.setCurrentWidget(self.field_page)
+    
         self.unit_buttons = [] 
         
-        main_layout.addLayout(self.unit_layout)
+        main_layout.addWidget(self.stacked_widget)
         main_layout.addWidget(self.right_label)
         self.setAcceptDrops(True)  # Accept drops
         self.setLayout(main_layout)
@@ -73,7 +86,7 @@ class FieldWidget(BaseWidget):
             self.unit_layout.addWidget(button, index // 7, index % 7)
         for index, unit in enumerate(unit_list):
             name = unit_to_text(unit)
-            button = DraggableLabel(name, 'field', index, unit is not None)
+            button = DraggableLabel(self, name, 'field', index, unit is not None)
             button.clicked.connect(lambda _, i=index: self.parent.view_unit('field', i))
             self.unit_layout.addWidget(button, index // 7 + 4, index % 7)
             self.unit_buttons.append(button) 

@@ -17,7 +17,7 @@ class BenchWidget(BaseWidget):
         
         button_names = [None for _ in range(9)]
         for index, name in enumerate(button_names):
-            btn = DraggableLabel(name, 'bench', index)
+            btn = DraggableLabel(self, name, 'bench', index)
             btn.clicked.connect(lambda _, i=index: self.parent.view_unit('bench', i))
             self.button_layout.addWidget(btn)
             self.buttons.append(btn) 

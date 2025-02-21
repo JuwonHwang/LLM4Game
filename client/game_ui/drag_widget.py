@@ -4,8 +4,9 @@ from PyQt6.QtGui import QDrag, QPixmap, QPainter
 import json
 
 class DraggableLabel(QPushButton):
-    def __init__(self, text, source='bench', index=-1, dragable=True):
+    def __init__(self, parent, text, source='bench', index=-1, dragable=True):
         super().__init__(text)
+        self.parent = parent
         self.source = source
         self.index = index
         self.dragable = dragable
@@ -48,6 +49,6 @@ class DraggableLabel(QPushButton):
         data = event.mimeData().data("application/json").data().decode("utf-8")
         data = json.loads(data)
         data["target_index"] = self.index
-        self.parent().parent.refresh_style()
-        self.parent().dropped(data)
+        self.parent.parent.refresh_style()
+        self.parent.dropped(data)
         event.acceptProposedAction()

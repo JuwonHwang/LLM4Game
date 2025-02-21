@@ -18,7 +18,7 @@ class ShopWidget(BaseWidget):
         
         button_names = ["button 1", "button 2", "button 3", "button 4", "button 5"]
         for index, name in enumerate(button_names):
-            btn = DraggableLabel(name, 'shop', index)
+            btn = DraggableLabel(self,name, 'shop', index)
             btn.clicked.connect(lambda _, i=index: self.parent.view_unit('shop', i))
             self.button_layout.addWidget(btn)
             self.buttons.append(btn)
