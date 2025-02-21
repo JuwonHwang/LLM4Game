@@ -93,28 +93,55 @@ class UnitWidget(BaseWidget):
                 'status': {
                     "hp": 0, "mp": 0, "attack": 0, "defense": 0, "attackSpeed": 0,
                     "specialAttack": 0, "specialDefense": 0, "criticalRate": 0,
-                    "criticalDamage": 0, "attackRange": 0,
+                    "criticalDamage": 1, "attackRange": 0,
                 }
             }
         """Update QLabel with unit information"""
         name = unit_to_text(unit)
-        self.name_label.setText(f"<b>{name}</b>")
+        self.name_label.setText(f"{name}")
+        self.name_label.setStyleSheet("""
+            QLabel {
+                background-color:rgb(89, 103, 124);
+                color: white;
+                font-size: 16px;
+                font-weight: bold;
+                border-radius: 10px;
+                padding-bottom: 10px;
+                padding: 4px;    
+                min-width: 80px;
+                min-height: 20px;
+            }
+        """)
         self.gold_label.setText(f"💰 {unit['price']}")
+        self.gold_label.setStyleSheet("""
+            QLabel {
+                background-color:rgb(89, 103, 124);
+                color: white;
+                font-size: 28px;
+                font-weight: bold;
+                border-radius: 10px;
+                padding-bottom: 10px;
+                padding: 4px;    
+                min-width: 80px;
+                min-height: 20px;
+            }
+        """)
         # self.level_label.setText(f"⭐ {unit['level']}")
 
         self.synergy_label.setText(f"Synergy {', '.join(unit['synergy']) if unit['synergy'] else 'None'}")
         self.item_label.setText(f"Item {', '.join(unit['item']) if unit['item'] else 'None'}")
 
-        self.hp_label.setText(f"❤️ {unit['status']['hp']}")
-        self.mp_label.setText(f"🔵 {unit['status']['mp']}")
-        self.attack_label.setText(f"ATK {unit['status']['attack']}")
-        self.defense_label.setText(f"DEF {unit['status']['defense']}")
-        self.attack_speed_label.setText(f"Speed {unit['status']['attackSpeed']}")
-        self.special_attack_label.setText(f"SA {unit['status']['specialAttack']}")
-        self.special_defense_label.setText(f"SD {unit['status']['specialDefense']}")
-        self.critical_rate_label.setText(f"🎯 {unit['status']['criticalRate']}%")
-        self.critical_damage_label.setText(f"💥 {unit['status']['criticalDamage']}x")
-        self.attack_range_label.setText(f"🏹 {unit['status']['attackRange']}")
+        self.hp_label.setText(f"❤️ {int(unit['status']['hp'])}")
+        self.mp_label.setText(f"🔵 {int(unit['status']['mp'])}")
+        self.attack_label.setText(f"ATK {int(unit['status']['attack'])}")
+        self.defense_label.setText(f"DEF {int(unit['status']['defense'])}")
+        self.attack_speed_label.setText(f"Speed {unit['status']['attackSpeed']:.2f}")
+        self.special_attack_label.setText(f"MPA {int(unit['status']['specialAttack'])}")
+        self.special_defense_label.setText(f"MPR {int(unit['status']['specialDefense'])}")
+        self.critical_rate_label.setText(f"🎯 {int(unit['status']['criticalRate'])}%")
+        critical_damage = int(unit['status']['criticalDamage'] * 100) - 100
+        self.critical_damage_label.setText(f"💥 +{critical_damage}%")
+        self.attack_range_label.setText(f"🏹 {int(unit['status']['attackRange'])}")
 
     def create_section(self, title, layout):
         frame = QFrame()
