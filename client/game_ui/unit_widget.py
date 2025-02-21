@@ -1,6 +1,7 @@
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QSizePolicy
 from ..game_ui.util import unit_to_text
 from ..baseWidget import BaseWidget
+from PyQt6.QtCore import Qt
 
 class UnitWidget(BaseWidget):
     def __init__(self, parent):
@@ -103,7 +104,7 @@ class UnitWidget(BaseWidget):
             QLabel {
                 background-color:rgb(89, 103, 124);
                 color: white;
-                font-size: 16px;
+                font-size: 14px;
                 font-weight: bold;
                 border-radius: 10px;
                 padding-bottom: 10px;
@@ -112,6 +113,8 @@ class UnitWidget(BaseWidget):
                 min-height: 20px;
             }
         """)
+        self.name_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
         self.gold_label.setText(f"💰 {unit['price']}")
         self.gold_label.setStyleSheet("""
             QLabel {
@@ -126,6 +129,7 @@ class UnitWidget(BaseWidget):
                 min-height: 20px;
             }
         """)
+        self.gold_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         # self.level_label.setText(f"⭐ {unit['level']}")
 
         self.synergy_label.setText(f"Synergy {', '.join(unit['synergy']) if unit['synergy'] else 'None'}")

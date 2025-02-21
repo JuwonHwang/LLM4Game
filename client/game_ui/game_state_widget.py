@@ -23,7 +23,7 @@ class GameStateWidget(BaseWidget):
                 
     def update_state(self, data):
         # print(data['time'])
-        self.round_label.setText(f"{data['round']}")
+        self.round_label.setText(f"{data['round']+1}")
         self.state_label.setText(f"{data['current_state']}")
         self.state_timer.setValue(int(data['time'] * 60))
         self.state_timer.setMaximum(data['state_time'] * 60)

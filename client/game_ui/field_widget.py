@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QApplication, QStackedWidget, QGridLayout, QWidget, QHBoxLayout, QPushButton, QVBoxLayout, QLabel
-
+from PyQt6.QtCore import Qt
 from ..game_ui.util import unit_to_text
 from ..baseWidget import BaseWidget
 from .battle_widget import BattleWidget
@@ -15,15 +15,18 @@ class FieldWidget(BaseWidget):
         self.left_label.setStyleSheet("""
             QLabel {
                 min-width: 120px;
+                
             }
         """)
+        self.left_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
         self.right_label = QLabel()
         self.right_label.setStyleSheet("""
             QLabel {
                 min-width: 120px;
             }
         """)
-        main_layout.addWidget(self.left_label)
+        self.right_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
         self.field_page = QWidget()
         self.battle_page = BattleWidget(self.parent)
@@ -39,6 +42,7 @@ class FieldWidget(BaseWidget):
     
         self.unit_buttons = [] 
         
+        main_layout.addWidget(self.left_label)
         main_layout.addWidget(self.stacked_widget)
         main_layout.addWidget(self.right_label)
         self.setAcceptDrops(True)  # Accept drops
