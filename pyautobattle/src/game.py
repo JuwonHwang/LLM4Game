@@ -56,13 +56,15 @@ class AutoBattlerGame(Base):
             player.active = value
 
     def next_state(self):
-        if self.state == GameState.READY:
+        if self.state == GameState.READY: # READY -> BATTLE
             self.setActive(False)
             self.state = GameState.BATTLE
-        elif self.state == GameState.BATTLE:
+
+        elif self.state == GameState.BATTLE: # BATTLE -> READY
             self.setActive(True)
             self.state = GameState.READY
             self.next_round()
+
         else:
             raise ValueError("Invalid game state")
 

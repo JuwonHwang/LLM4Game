@@ -2,6 +2,7 @@ from PyQt6.QtWidgets import QApplication, QStackedWidget, QGridLayout, QWidget, 
 
 from ..game_ui.util import unit_to_text
 from ..baseWidget import BaseWidget
+from .battle_widget import BattleWidget
 from .drag_widget import DraggableLabel
 import json
 
@@ -15,13 +16,11 @@ class FieldWidget(BaseWidget):
         main_layout.addWidget(self.left_label)
         
         self.field_page = QWidget()
-        self.battle_page = QWidget()
+        self.battle_page = BattleWidget(self.parent)
         self.stacked_widget = QStackedWidget()
 
         self.unit_layout = QGridLayout()
         self.field_page.setLayout(self.unit_layout)
-        self.battle_layout = QGridLayout()
-        self.battle_page.setLayout(self.battle_layout)
 
         self.stacked_widget.addWidget(self.field_page)
         self.stacked_widget.addWidget(self.battle_page)
@@ -68,6 +67,14 @@ class FieldWidget(BaseWidget):
             self.parent.send_command('move_unit', data['source'], 'field', data['index'], -1)
         self.parent.refresh_style()
         event.acceptProposedAction()
+
+    def set_game_state(self, game_state):
+        if game_state == 'READY':
+            self.stacked_widget.setCurrentWidget(self.field_page)
+        elif game_state == 'BATTLE':
+            self.stacked_widget.setCurrentWidget(self.battle_page)
+        else:
+            raise ValueError("Invalid game state")
 
     def update_state(self, data):
         self.clear_button_layout()

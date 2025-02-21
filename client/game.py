@@ -145,15 +145,16 @@ class GameScreen(BaseWidget):
             return
         game = data['game']
         player = data['player']
-        if not self.state or self.state['player']['shop'] != data['player']['shop']:
+        if not self.state or self.state['player']['shop'] != player['shop']:
             self.shop_layout.update_state(player['shop'])
-        if not self.state or self.state['player']['bench'] != data['player']['bench']:
+        if not self.state or self.state['player']['bench'] != player['bench']:
             self.bench_layout.update_state(player['bench'])
-        if not self.state or self.state['player']['field'] != data['player']['field']:
+        if not self.state or self.state['player']['field'] != player['field']:
             self.field_layout.update_state(player['field'])
-        if not self.state or self.state['game']['state'] != data['game']['state']:
+        if not self.state or self.state['game']['state'] != game['state']:
             self.game_state_widget.update_state(game["state"])
-        if not self.state or self.state['player'] != data['player']:
+            self.field_layout.set_game_state(game["state"]["current_state"])
+        if not self.state or self.state['player'] != player:
             self.player_layout.update_state(player)
         self.state = data
         self.refresh_style()

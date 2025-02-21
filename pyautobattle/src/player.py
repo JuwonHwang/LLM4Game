@@ -56,7 +56,8 @@ class Player(Base):
             "exp": self.exp,
             "req_exp": self.get_required_exp(),
             "unit_rate": self.get_appearance_rate(),
-            "streak": self.streak
+            "streak": self.streak,
+            "active": self.active,
         }
     
     def get_required_exp(self):
