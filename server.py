@@ -138,7 +138,7 @@ class GameServer:
         frame = 60
         while game_id in self.games.keys() and game.running:
             game.step(frame)  # 각 턴 진행
-            self.send_game_state(game_id)
+            await self.send_game_state(game_id)
             await asyncio.sleep(1 / frame)  # 60Frame초 간격으로 턴 진행
         
         await self.declare_winner(game_id)
@@ -232,7 +232,7 @@ class GameServer:
     
     async def player_action(self, sid, action, *args):
         player = await self.get_player(sid)
-        if player:
+        if player and player.active:
             method = getattr(player, action, None)
             if method:
                 message = method(*args)

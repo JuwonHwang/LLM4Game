@@ -25,6 +25,7 @@ class Player(Base):
         self.exp = 0
         self.req_exp_list = [0,2,2,6,10,20,36,48,76,84, float("inf")]
         self.streak = 0
+        self.active = False
         
     def observe(self):
         return {

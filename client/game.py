@@ -12,6 +12,7 @@ from .game_ui.bench_widget import BenchWidget
 from .game_ui.field_widget import FieldWidget
 from .game_ui.player_widget import PlayerWidget
 from .game_ui.unit_widget import UnitWidget
+from .game_ui.game_state_widget import GameStateWidget
 
 from .baseWidget import BaseWidget
 
@@ -73,7 +74,7 @@ class GameScreen(BaseWidget):
                 }}
             """)
         
-        self.game_state_widget = QLabel("GAME_STATE")
+        self.game_state_widget = GameStateWidget(self)
         self.synergy_widget = QLabel("Synergy")
         self.item_widget = QLabel("Item")
         
@@ -140,15 +141,21 @@ class GameScreen(BaseWidget):
             w.setPalette(palette)
         
     def update_state(self, data: dict):
-        self.state = data
         if len(data.keys()) == 0:
             return
+        game = data['game']
         player = data['player']
-        
-        self.shop_layout.update_state(player['shop'])
-        self.bench_layout.update_state(player['bench'])
-        self.field_layout.update_state(player['field'])
-        self.player_layout.update_state(player)
+        if not self.state or self.state['player']['shop'] != data['player']['shop']:
+            self.shop_layout.update_state(player['shop'])
+        if not self.state or self.state['player']['bench'] != data['player']['bench']:
+            self.bench_layout.update_state(player['bench'])
+        if not self.state or self.state['player']['field'] != data['player']['field']:
+            self.field_layout.update_state(player['field'])
+        if not self.state or self.state['game']['state'] != data['game']['state']:
+            self.game_state_widget.update_state(game["state"])
+        if not self.state or self.state['player'] != data['player']:
+            self.player_layout.update_state(player)
+        self.state = data
         self.refresh_style()
         
     def view_unit(self, where, index):
