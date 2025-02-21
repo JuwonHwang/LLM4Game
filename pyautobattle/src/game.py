@@ -10,6 +10,7 @@ class AutoBattlerGame(Base):
         self.pool = Pool(unit_file, synergy_file)
         self.round = 0
         self.timer = 0
+        self.winner = None
         self.players: list[Player] = []
         self.current_players = set()
         self.running = False
@@ -34,7 +35,7 @@ class AutoBattlerGame(Base):
             player.refresh_shop()
         self.running = True
         
-    def step(self):
+    def next_round(self):
         for player in self.players:
             player.refresh_shop()
             player.get_turn_exp()
@@ -60,3 +61,13 @@ class AutoBattlerGame(Base):
             if player.player_id == user_id:
                 return player
         return None
+    
+    def get_winner():
+        return None
+    
+    def step(self, frame: int):
+        self.timer += 1 / frame
+        pass
+        
+    def stop(self):
+        self.running = False

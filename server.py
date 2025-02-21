@@ -4,6 +4,7 @@ import logging
 import socketio
 from aiohttp import web
 from pyautobattle.src import AutoBattlerGame
+import asyncio
 
 # Setup logging
 LOG_DIR = 'log'
@@ -118,6 +119,7 @@ class GameServer:
 
         if game_id and game_id in self.games:
             self.games[game_id].start()
+            asyncio.create_task(self.run_battle(game_id))
             await self.send_game_state(game_id)
             await self.send_home_state()
             await self.log(sid, f"game {game_id} start")
@@ -125,6 +127,38 @@ class GameServer:
         else:
             await self.sio.emit('response', 'ERROR: Invalid game ID', to=sid)
             return False
+        
+    ### Battle
+    
+    async def run_battle(self, game_id):
+        game = self.games.get(game_id)
+        if not game:
+            return
+        
+        frame = 60
+        while game_id in self.games.keys() and game.running:
+            game.step(frame)  # 각 턴 진행
+            self.send_game_state(game_id)
+            await asyncio.sleep(1 / frame)  # 60Frame초 간격으로 턴 진행
+        
+        await self.declare_winner(game_id)
+    
+    async def declare_winner(self, game_id):
+        game = self.games.get(game_id)
+        if not game:
+            return
+        
+        winner = game.get_winner()
+        await self.sio.emit('game_over', {'game_id': game_id, 'winner': winner}, to=self.rooms[game_id])
+        await self.log('server', f"Game {game_id} ended. Winner: {winner}")
+        
+        # 게임 종료 후 데이터 정리
+        game.stop()
+        self.games.pop(game_id, None)
+        self.rooms.pop(game_id, None)
+        await self.send_home_state()
+    
+    # ....
     
     async def send_game_state(self, game_id):
         for sid in self.rooms[game_id]:
@@ -151,6 +185,7 @@ class GameServer:
         await self.sio.emit('update_user', self.user_info[uid_by_sid])
     
     async def remove_game(self, game_id):
+        self.games[game_id].stop()
         for sid in self.rooms[game_id]:
             await self.sio.emit('update_game', {}, to=sid)
             # print(sid)
@@ -174,6 +209,8 @@ class GameServer:
                 await self.sio.emit('quit', to=sid)
             await self.log(sid, f'Player {user_id} quit game {game_id}')
         return True
+
+    # Player Actions
 
     async def reroll(self, sid):
         return await self.player_action(sid, 'reroll')
@@ -204,6 +241,8 @@ class GameServer:
                 await self.send_game_state(game_id)
                 return message
         return False
+    
+    # Server Utils
     
     async def get_user_id(self, sid):
         return self.sid_to_user.get(sid)
