@@ -160,7 +160,8 @@ class GameScreen(BaseWidget):
         self.refresh_style()
         
     def view_unit(self, where, index):
-        self.unit_widget.update_state(self.state['player'][where]['units'][index])
+        if self.state['player']:
+            self.unit_widget.update_state(self.state['player'][where]['units'][index])
         
     def send_command(self, action, *args):    
         return self.parent.run_async(self.parent.socket_thread.send_command(action, args))
