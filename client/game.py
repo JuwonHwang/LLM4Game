@@ -172,7 +172,6 @@ class GameScreen(BaseWidget):
         self.field_index = index
     
     def quit(self):
-        v = self.send_command("quit_game")
+        self.send_command("quit_game")
         self.parent.socket_thread.state["game"] = {}
-        if v:
-            self.parent.stacked_widget.setCurrentWidget(self.parent.home_screen)
+        self.parent.stacked_widget.setCurrentWidget(self.parent.home_screen)

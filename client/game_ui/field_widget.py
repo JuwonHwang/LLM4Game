@@ -12,7 +12,17 @@ class FieldWidget(BaseWidget):
         self.parent = parent
         main_layout = QHBoxLayout()
         self.left_label = QLabel("Field\n( 0 / 0 )")
+        self.left_label.setStyleSheet("""
+            QLabel {
+                min-width: 120px;
+            }
+        """)
         self.right_label = QLabel()
+        self.right_label.setStyleSheet("""
+            QLabel {
+                min-width: 120px;
+            }
+        """)
         main_layout.addWidget(self.left_label)
         
         self.field_page = QWidget()

@@ -13,6 +13,10 @@ class DraggableLabel(QPushButton):
         self.setAcceptDrops(True)  # Accept drops
         # self.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
+    def enterEvent(self, event):
+        self.parent.parent.view_unit(self.source, self.index)
+        return super().enterEvent(event)
+
     def mouseMoveEvent(self, event):
         if event.buttons() == Qt.MouseButton.LeftButton and self.dragable:
             drag = QDrag(self)
