@@ -13,17 +13,35 @@ class LobbyScreen(BaseWidget):
         super().__init__()
         self.parent = parent
         layout = QVBoxLayout()
+        control_layout = QHBoxLayout()
         
         self.game_id_label = QLabel()
         self.user_list = QListWidget()
         
         self.btn_start = QPushButton("▶ Start Game")
         self.btn_start.clicked.connect(self.start_game)
+        self.btn_quit = QPushButton("❌ Quit Game")
+        self.btn_quit.setStyleSheet(f"""
+            QPushButton {{
+                    background-color: rgb(200, 80, 80);
+                    color: white;
+                    font-size: 18px;
+                    font-weight: bold;
+                    padding: 10px;
+                    border-radius: 10px;
+                }}
+                QPushButton:hover {{
+                    background-color: rgb(220, 120, 120);
+                }}
+            """)
+        self.btn_quit.clicked.connect(self.quit)
         
         layout.addWidget(self.game_id_label)
         layout.addWidget(QLabel("👤 Users"))
         layout.addWidget(self.user_list)
-        layout.addWidget(self.btn_start)
+        control_layout.addWidget(self.btn_start)
+        control_layout.addWidget(self.btn_quit)
+        layout.addLayout(control_layout)
         
         self.setLayout(layout)
     
@@ -44,3 +62,9 @@ class LobbyScreen(BaseWidget):
             user_id = user['user_id']
             score = user['score']
             self.user_list.addItem(f"{user_id} (score: {score})")
+
+    def quit(self):
+        v = self.parent.run_async(self.parent.socket_thread.send_command("quit_game", None))
+        self.parent.socket_thread.state["game"] = {}
+        if v:
+            self.parent.stacked_widget.setCurrentWidget(self.parent.home_screen)

@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtGui import QIcon, QPixmap, QPainter, QFont
 from PyQt6.QtCore import QThread, pyqtSignal, Qt
-from client import SocketThread, GameScreen, HomeScreen, LobbyScreen, LoginScreen
+from client import SocketThread, GameScreen, HomeScreen, LobbyScreen, LoginScreen, BaseWidget
 
 # Function to load URL from a text file
 def load_server_url(filename=".server"):
@@ -23,7 +23,7 @@ SERVER_URL = load_server_url()
 # ===========================
 # 🚀 5️⃣ 메인 UI 컨트롤러
 # ===========================
-class GameUI(QWidget):
+class GameUI(BaseWidget):
     def __init__(self, loop):
         super().__init__()
         

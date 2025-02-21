@@ -1,17 +1,20 @@
 QWidget {
+    background-color:rgb(231, 231, 231);
 }
 
 QLabel {
-    background-color:rgb(48, 64, 77);
+    background-color:rgb(79, 93, 104);
     color: white;
     font-size: 22px;
     font-weight: bold;
+    border-radius: 10px;
     padding-bottom: 10px;
+    padding: 4px;
 }
 
 QLineEdit {
-    background-color:rgb(84, 112, 134);
     padding: 8px;
+    color: black;
     border: 2px solidrgb(30, 121, 182);
     border-radius: 10px;
     background: white;
@@ -43,7 +46,7 @@ QListWidget::item {
 }
 
 QPushButton {
-    background-color:rgb(56, 114, 69);
+    background-color:rgb(44, 72, 96);
     color: white;
     font-size: 18px;
     font-weight: bold;
@@ -52,6 +55,6 @@ QPushButton {
 }
 
 QPushButton:hover {
-    background-color:rgb(126, 185, 136);
+    background-color:rgb(148, 186, 204);
 }
 
