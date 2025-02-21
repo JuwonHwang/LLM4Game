@@ -16,7 +16,7 @@ class AutoBattlerGame(Base):
         self.pool = Pool(unit_file, synergy_file)
         self.round = 0
         self.timer = 0
-        self.state_time = 30
+        self.state_time = 10
         self.winner = None
         self.players: list[Player] = []
         self.current_players = set()
@@ -59,12 +59,14 @@ class AutoBattlerGame(Base):
         if self.state == GameState.READY: # READY -> BATTLE
             self.setActive(False)
             self.state = GameState.BATTLE
+            self.state_time = 10
 
         elif self.state == GameState.BATTLE: # BATTLE -> READY
             self.setActive(True)
             self.state = GameState.READY
             self.next_round()
-
+            self.state_time = 20
+            
         else:
             raise ValueError("Invalid game state")
 
