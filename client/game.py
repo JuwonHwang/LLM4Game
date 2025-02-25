@@ -154,13 +154,15 @@ class GameScreen(BaseWidget):
         if not self.state or self.state['game']['state'] != game['state']:
             self.game_state_widget.update_state(game["state"])
             self.field_layout.set_game_state(game["state"]["current_state"])
+        if not self.state or self.state['game']['battle'] != game['battle']:
+            self.field_layout.update_battle(game['battle'][player['id']])
         if not self.state or self.state['player'] != player:
             self.player_layout.update_state(player)
         self.state = data
         self.refresh_style()
         
     def view_unit(self, where, index):
-        if self.state['player']:
+        if self.state and self.state['player']:
             self.unit_widget.update_state(self.state['player'][where]['units'][index])
         
     def send_command(self, action, *args):    

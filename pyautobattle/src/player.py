@@ -27,6 +27,9 @@ class Player(Base):
         self.streak = 0
         self.active = False
         
+    def is_alive(self):
+        return self.hp > 0
+        
     def observe(self):
         return {
             "id": self.player_id,

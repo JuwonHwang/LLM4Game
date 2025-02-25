@@ -14,6 +14,9 @@ class Bench(Base):
                 return i
         return -1
     
+    def __getitem__(self, index):
+        return self.units[index]
+    
     def add(self, unit: Unit):
         index = self.find_empty()
         if index == -1:

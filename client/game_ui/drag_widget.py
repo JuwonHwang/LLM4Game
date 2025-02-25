@@ -14,7 +14,8 @@ class DraggableLabel(QPushButton):
         # self.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
     def enterEvent(self, event):
-        self.parent.parent.view_unit(self.source, self.index)
+        if self.source in ['bench', 'field', 'shop']:
+            self.parent.parent.view_unit(self.source, self.index)
         return super().enterEvent(event)
 
     def mouseMoveEvent(self, event):

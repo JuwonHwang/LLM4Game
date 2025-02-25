@@ -4,7 +4,7 @@ import json
 import math
 import random
 import copy
-# from .color import *
+from .util import TEAM
 
 class Unit(Active):
     def __init__(self, name: str, cost: int, level: int, status: Status, synergy: list[str]):
@@ -19,6 +19,7 @@ class Unit(Active):
         self.cooldown_time = 0
         self.mana = 0
         self.live = True
+        self.team = TEAM.HOME
         
     def observe(self):
         return {
@@ -88,8 +89,10 @@ class Unit(Active):
             copy.deepcopy(self.cost, memo),
             copy.deepcopy(self.level, memo),
             copy.deepcopy(self.status, memo),
-            copy.deepcopy(self.synergy, memo)
+            copy.deepcopy(self.synergy, memo),
+            
         )
+        
         # Deep copy additional attributes
         self.cooldown_time = copy.deepcopy(self.cooldown_time, memo)
         self.mana = copy.deepcopy(self.mana, memo)

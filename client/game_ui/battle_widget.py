@@ -1,4 +1,5 @@
-from PyQt6.QtWidgets import QApplication, QStackedWidget, QGridLayout, QWidget, QHBoxLayout, QPushButton, QVBoxLayout, QLabel
+from PyQt6.QtWidgets import QApplication, QStackedWidget, QLineEdit, QGridLayout, QWidget, QHBoxLayout, QPushButton, QVBoxLayout, QLabel
+from .drag_widget import DraggableLabel
 
 from ..game_ui.util import unit_to_text
 from ..baseWidget import BaseWidget
@@ -9,10 +10,12 @@ class BattleWidget(BaseWidget):
         super().__init__("client/game_ui/game_styles.qss")
         self.parent = parent
         main_layout = QHBoxLayout()
-
+        
+        self.raw_data = QLineEdit()
         self.unit_layout = QGridLayout()
         self.unit_buttons = [] 
         
+        # main_layout.addWidget(self.raw_data)
         main_layout.addLayout(self.unit_layout)
 
         self.setLayout(main_layout)
@@ -28,40 +31,48 @@ class BattleWidget(BaseWidget):
 
     def update_state(self, data):
         self.clear_button_layout()
-        # enemy = data['enemy']
-        # ally = data['ally']
-        # unit_list = data['units']
-        # max_units = data['max_units']
-        # unit_count = len([unit for unit in unit_list if unit is not None])
-        # self.left_label.setText(f"Field\n( {unit_count} / {max_units} )")
-        # for index in range(len(unit_list)):
-        #     button = QPushButton()
-        #     button.setStyleSheet(f"""
-        #         QPushButton {{
-        #             background-color: #cccccc;
-        #             color: white;
-        #         }}
-        #     """)
-        #     self.unit_layout.addWidget(button, index // 7, index % 7)
+        self.raw_data.setText(f'{data}')
+        if not data:
+            return
+        team = data['team']
+        arena = data['arena']
+        button = QPushButton()
+        button.setStyleSheet(f"""
+            QPushButton {{
+                background-color: #cccccc;
+                color: white;
+            }}
+        """)
+        units = [[None for j in range(7)] for i in range(8)]
+        
+        for unit_info in arena:
+            unit = unit_info['unit']
+            pos = unit_info['pos']
+            name = unit_to_text(unit)
+            if team == 'home':
+                units[7-pos[0]][pos[1]] = unit
+            else:
+                units[pos[0]][pos[1]] = unit
 
-        # for index, unit in enumerate(unit_list):
-        #     name = unit_to_text(unit)
-        #     button = QPushButton(name)
-        #     button.clicked.connect(lambda _, i=index: self.parent.view_unit('battle', i))
-        #     self.unit_layout.addWidget(button, index // 7 + 4, index % 7)
-        #     self.unit_buttons.append(button) 
-        #     if unit is not None:
-        #         color = self.color_map[unit['cost']]
-        #         hover_color = self.hover_color_map[unit['cost']]
-        #     else:
-        #         color = "#eeeeee"
-        #         hover_color = "#eeeeee"
-        #     button.setStyleSheet(f"""
-        #         QPushButton {{
-        #             background-color: {color};
-        #             color: white;
-        #         }}
-        #         QPushButton:hover {{
-        #             background-color: {hover_color};
-        #         }}
-        #     """)
+        for row in range(8):
+            for col in range(7):
+                unit = units[row][col]
+                name = unit_to_text(unit)
+                button = QPushButton(name)
+                self.unit_layout.addWidget(button, row, col)
+                self.unit_buttons.append(button) 
+                if unit is not None:
+                    color = self.color_map[unit['cost']]
+                    hover_color = self.hover_color_map[unit['cost']]
+                else:
+                    color = "#eeeeee"
+                    hover_color = "#eeeeee"
+                button.setStyleSheet(f"""
+                    QPushButton {{
+                        background-color: {color};
+                        color: white;
+                    }}
+                    QPushButton:hover {{
+                        background-color: {hover_color};
+                    }}
+                """)

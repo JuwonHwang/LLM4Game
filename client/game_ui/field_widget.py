@@ -109,7 +109,7 @@ class FieldWidget(BaseWidget):
             name = unit_to_text(unit)
             button = DraggableLabel(self, name, 'field', index, unit is not None)
             button.clicked.connect(lambda _, i=index: self.parent.view_unit('field', i))
-            self.unit_layout.addWidget(button, index // 7 + 4, index % 7)
+            self.unit_layout.addWidget(button, 8 - index // 7, index % 7)
             self.unit_buttons.append(button) 
             if unit is not None:
                 color = self.color_map[unit['cost']]
@@ -126,3 +126,6 @@ class FieldWidget(BaseWidget):
                     background-color: {hover_color};
                 }}
             """)
+            
+    def update_battle(self, data):
+        self.battle_page.update_state(data)
