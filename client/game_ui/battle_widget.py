@@ -3,6 +3,7 @@ from .drag_widget import DraggableLabel
 
 from ..game_ui.util import unit_to_text
 from ..baseWidget import BaseWidget
+from .battle_unit_widget import BattleUnitWidget
 import json
 
 class BattleWidget(BaseWidget):
@@ -52,27 +53,24 @@ class BattleWidget(BaseWidget):
             if team == 'home':
                 units[7-pos[0]][pos[1]] = unit
             else:
-                units[pos[0]][pos[1]] = unit
+                units[pos[0]][6-pos[1]] = unit
 
         for row in range(8):
             for col in range(7):
                 unit = units[row][col]
                 name = unit_to_text(unit)
-                button = QPushButton(name)
-                self.unit_layout.addWidget(button, row, col)
-                self.unit_buttons.append(button) 
                 if unit is not None:
                     color = self.color_map[unit['cost']]
                     hover_color = self.hover_color_map[unit['cost']]
                 else:
                     color = "#eeeeee"
                     hover_color = "#eeeeee"
-                button.setStyleSheet(f"""
-                    QPushButton {{
-                        background-color: {color};
-                        color: white;
-                    }}
-                    QPushButton:hover {{
-                        background-color: {hover_color};
-                    }}
-                """)
+                button = BattleUnitWidget(unit, color, hover_color)
+                self.unit_layout.addWidget(button, row, col)
+                self.unit_buttons.append(button) 
+                
+                # 행과 열의 크기를 동일하게 설정
+        for i in range(8):
+            self.unit_layout.setRowStretch(i, 1)
+        for j in range(7):
+            self.unit_layout.setColumnStretch(j, 1)
