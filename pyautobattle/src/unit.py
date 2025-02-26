@@ -16,10 +16,11 @@ class Unit(Active):
         self.status = status
         self.additional_status = Status(0,0,0,0,0,0,0,0,0,0)
         self.items = []
-        self.cooldown_time = 0
+        self.cooldown_time = 60
         self.mana = 0
         self.live = True
         self.team = TEAM.HOME
+        self.move_cool = 60
         
     def observe(self):
         return {
@@ -40,7 +41,8 @@ class Unit(Active):
             "synergy": self.synergy,
             "item": [item.to_json() for item in self.items],
             "mana": self.mana,
-            "status": self.status.to_json()
+            "status": self.status.to_json(),
+            "team": self.team.value
         }
 
     def get_combat_mode(self):
@@ -54,12 +56,26 @@ class Unit(Active):
 
     def die(self):
         self.live = False
+    
+    def alive(self):
+        return self.live
 
     def update(self):
         self.cooldown()
-
+    
+    def move(self):
+        self.move_cool -= 1
+        if self.move_cool <= 0:
+            self.move_cool = 30
+            return True
+        else:
+            return False
+        
     def cooldown(self):
-        self.cooldown_time -= 1 / 1000
+        self.cooldown_time -= 1
+
+    def cooldowned(self):
+        return self.cooldown_time <= 0
 
     def hit(self, other):
         if not isinstance(other, Unit):
@@ -71,6 +87,7 @@ class Unit(Active):
         other.status.hp -= damage
         self.mana += 20
         killed = False
+        self.cooldown_time = 30 / self.status.attackSpeed
         if other.status.hp <= 0:
             other.die()
             killed = True

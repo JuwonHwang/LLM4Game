@@ -340,3 +340,6 @@ class Player(Base):
         return {
                 MSG: [f"{self.name} gold + 100."]
         }
+        
+    def play_randomly(self):
+        pass
