@@ -24,7 +24,6 @@ class GameServer:
         
         self.clients = set()
         self.sid_to_user = {}
-        self.user_info = {}
         self.games = {}
         self.rooms = {}
         
@@ -52,6 +51,8 @@ class GameServer:
         if os.path.exists(self.user_db_path):
             with open(self.user_db_path, 'r', encoding='utf-8') as file:
                 self.user_info = json.load(file)
+                print(self.user_info)
+                print("user_file loaded")
         else:
             self.user_info = {}
     
@@ -64,22 +65,28 @@ class GameServer:
         await self.log(sid, "Connected")
     
     async def disconnect(self, sid):
+        game_id = await self.get_game_id(sid)
+        if game_id and game_id in self.games.keys():
+            await self.send_lobby_state(game_id)
+            
         await self.quit_game(sid)
         self.sid_to_user.pop(sid, None)
         self.clients.discard(sid)
+        
         await self.log(sid, "Disconnected")
     
     async def login(self, sid, user_id):
         user_id = user_id[0] if isinstance(user_id, list) else user_id
         self.sid_to_user[sid] = user_id
         
-        if user_id not in self.user_info:
+        if user_id not in self.user_info.keys():
             self.user_info[user_id] = {'user_id': user_id, 'score': 100, 'playing': False, 'game_id': None, 'player_id': -1}
             self.save_user_db()
             await self.log(sid, f'User {user_id} created')
         
         await self.log(sid, f'User {user_id} logged in')
-        await self.sio.emit('update_home', {"user": self.user_info[user_id], 'games': list(self.games.keys())}, to=sid)
+        await self.send_user_state(sid)
+        await self.send_home_state()
         return True
     
     def save_user_db(self):
@@ -88,10 +95,16 @@ class GameServer:
     
     async def register_game(self, sid, game_id='000'):
         user_id = await self.get_user_id(sid)
+        await self.sio.emit('response', f'Your ID {user_id}', to=sid)
+        
         if not user_id:
             await self.sio.emit('response', 'You must log in before registering a game', to=sid)
             return False
 
+        if self.user_info[user_id]['game_id'] is not None:
+            await self.sio.emit('response', 'You cannot register more than one game', to=sid)
+            return False
+        
         if game_id not in self.games:
             self.games[game_id] = AutoBattlerGame(game_id)
             self.rooms[game_id] = []
@@ -105,10 +118,12 @@ class GameServer:
         self.rooms[game_id].append(sid)
         self.user_info[user_id]['game_id'] = game_id
         self.user_info[user_id]['player_id'] = len(game.current_players)
+        await self.send_user_state(sid)
         if len(game.current_players) > 8:
             await self.sio.emit('response', 'ERROR: Max # of players reached', to=sid)
             return False
         else:
+            await self.sio.emit('response', f'You joined {game_id}', to=sid)
             await self.send_lobby_state(game_id)
             await self.send_home_state()
             return True
@@ -143,26 +158,41 @@ class GameServer:
         
         await self.declare_winner(game_id)
     
+    async def user_score_update(self, user_id, score):
+        if user_id in self.user_info.keys():
+            self.user_info[user_id]['score'] += score
+    
     async def declare_winner(self, game_id):
         game = self.games.get(game_id)
         if not game:
             return
         
-        winner = game.get_winner()
-        await self.sio.emit('game_over', {'game_id': game_id, 'winner': winner}, to=self.rooms[game_id])
-        await self.log('server', f"Game {game_id} ended. Winner: {winner}")
+        rank_list = game.get_winner()
+        for i, user_id in enumerate(rank_list):
+            if i < 4:
+                score = 4 - i # 4 3 2 1
+            else:
+                score = 3 - i # -1 -2 -3 -4
+            await self.user_score_update(user_id, score)
+        
+        await self.sio.emit('game_over', {'game_id': game_id, 'winner': rank_list}, to=self.rooms[game_id])
+        await self.log('server', f"Game {game_id} ended. Winner: {rank_list}")
         
         # 게임 종료 후 데이터 정리
         game.stop()
-        self.games.pop(game_id, None)
-        self.rooms.pop(game_id, None)
-        await self.send_home_state()
+        self.save_user_db()
+        
+        while self.rooms[game_id]:
+            sid = self.rooms[game_id][0]
+            await self.quit_game(sid)
     
     # ....
     
     async def send_game_state(self, game_id):
         for sid in self.rooms[game_id]:
             uid_by_sid = await self.get_user_id(sid) 
+            self.user_info[uid_by_sid]['playing'] = True
+            await self.send_user_state(sid)
             await self.sio.emit('update_game', {
                 'game': self.games[game_id].to_json(), 
                 'player': self.games[game_id].get_player_by_user_id(uid_by_sid).to_json()
@@ -182,14 +212,18 @@ class GameServer:
     
     async def send_user_state(self, sid):
         uid_by_sid = await self.get_user_id(sid) 
-        await self.sio.emit('update_user', self.user_info[uid_by_sid])
+        await self.sio.emit('update_user', self.user_info[uid_by_sid], to=sid)
     
+    async def alarm_game_end(self, sid):
+        await self.sio.emit('game_end', to=sid)
+        
     async def remove_game(self, game_id):
         self.games[game_id].stop()
         for sid in self.rooms[game_id]:
             await self.sio.emit('update_game', {}, to=sid)
             # print(sid)
             await self.sio.emit('quit', to=sid)
+        await self.send_home_state()
         await self.log('server', f"game {game_id} removed")
     
     async def quit_game(self, sid):
@@ -198,6 +232,10 @@ class GameServer:
 
         if user_id and game_id:
             self.user_info[user_id]['game_id'] = None
+            self.user_info[user_id]['playing'] = False
+            await self.send_user_state(sid)
+            await self.alarm_game_end(sid)
+            # print(self.games[game_id].current_players)
             n_player = self.games[game_id].quit(user_id)
             if n_player == 0:
                 await self.remove_game(game_id)
@@ -206,8 +244,10 @@ class GameServer:
                 await self.send_home_state()
             else:
                 self.rooms[game_id].remove(sid)
+                await self.send_lobby_state(game_id)
                 await self.sio.emit('quit', to=sid)
             await self.log(sid, f'Player {user_id} quit game {game_id}')
+            self.save_user_db()
         return True
 
     # Player Actions
