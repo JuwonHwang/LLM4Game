@@ -1,4 +1,5 @@
-from PyQt6.QtWidgets import QApplication, QStackedWidget, QLineEdit, QGridLayout, QWidget, QHBoxLayout, QPushButton, QVBoxLayout, QLabel
+from PyQt6.QtWidgets import QLineEdit, QGridLayout, QHBoxLayout, QPushButton, QSizePolicy
+from PyQt6.QtCore import QSize
 from .drag_widget import DraggableLabel
 
 from ..game_ui.util import unit_to_text
@@ -58,7 +59,6 @@ class BattleWidget(BaseWidget):
         for row in range(8):
             for col in range(7):
                 unit = units[row][col]
-                name = unit_to_text(unit)
                 if unit is not None:
                     color = self.color_map[unit['cost']]
                     hover_color = self.hover_color_map[unit['cost']]
@@ -66,11 +66,7 @@ class BattleWidget(BaseWidget):
                     color = "#eeeeee"
                     hover_color = "#eeeeee"
                 button = BattleUnitWidget(unit, color, hover_color)
+                button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
                 self.unit_layout.addWidget(button, row, col)
                 self.unit_buttons.append(button) 
                 
-                # 행과 열의 크기를 동일하게 설정
-        for i in range(8):
-            self.unit_layout.setRowStretch(i, 1)
-        for j in range(7):
-            self.unit_layout.setColumnStretch(j, 1)

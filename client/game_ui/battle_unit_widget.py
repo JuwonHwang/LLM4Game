@@ -1,7 +1,7 @@
 import sys
 from PyQt6.QtWidgets import (
     QApplication, QWidget, QPushButton, QProgressBar,
-    QVBoxLayout, QGridLayout
+    QVBoxLayout, QGridLayout, QSpacerItem, QSizePolicy
 )
 from PyQt6.QtCore import Qt
 from ..game_ui.util import unit_to_text
@@ -31,6 +31,7 @@ class BattleUnitWidget(QWidget):
         """)
         layout.addWidget(self.button)
         self.health_bar = QProgressBar()
+        self.space_ = QSpacerItem(10, 10, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
         health_bar_color = '#52a332' if unit and unit['team'] == 'home' else '#a35232'
         self.health_bar.setStyleSheet(f"""
             QProgressBar {{
@@ -51,10 +52,9 @@ class BattleUnitWidget(QWidget):
             # 체력 바 생성
             self.health_bar.setRange(0, int(unit['status']['max_hp']) if unit else 100)
             self.health_bar.setValue(int(unit['status']['hp']) if unit else 0)
+            layout.addWidget(self.health_bar)
         else:
             self.health_bar.setRange(0, 100)
             self.health_bar.setValue(0)
-            self.health_bar.setVisible(False)
-        layout.addWidget(self.health_bar)
         # 전체 위젯의 스타일 설정
         self.setStyleSheet("background-color: transparent;")

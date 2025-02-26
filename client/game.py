@@ -13,6 +13,7 @@ from .game_ui.field_widget import FieldWidget
 from .game_ui.player_widget import PlayerWidget
 from .game_ui.unit_widget import UnitWidget
 from .game_ui.game_state_widget import GameStateWidget
+from .game_ui.map_widget import MapWidget
 
 from .baseWidget import BaseWidget
 
@@ -21,7 +22,7 @@ class GameScreen(BaseWidget):
         super().__init__("client/styles.qss")
         self.parent = parent
         self.state = None
-        
+        self.player_id = None
         self.basic_styles = "client/game_ui/game_styles.qss"
         
         layout = QHBoxLayout()
@@ -74,20 +75,19 @@ class GameScreen(BaseWidget):
                 }}
             """)
         
+        self.view_player = None
+        
         self.game_state_widget = GameStateWidget(self)
         self.synergy_widget = QLabel("Synergy")
         self.item_widget = QLabel("Item")
         
-        self.map_widget = QLabel("Map")
+        self.map_widget = MapWidget(self)
         self.unit_widget = UnitWidget(self)
         
         self.shop_layout = ShopWidget(self)
         self.bench_layout = BenchWidget(self)
         self.field_layout = FieldWidget(self)
         self.player_layout = PlayerWidget(self)
-        
-        self.player_info_layout = QVBoxLayout()
-        self.player_buttons = []
         
         self.btn_exp.clicked.connect(lambda: self.send_command("buy_exp"))
         self.btn_reroll.clicked.connect(lambda: self.send_command("reroll"))
@@ -144,29 +144,55 @@ class GameScreen(BaseWidget):
         if len(data.keys()) == 0:
             return
         game = data['game']
-        player = data['player']
-        if not self.state or self.state['player']['shop'] != player['shop']:
+        if self.view_player is None:
+            player = data['player']
+            self.player_id = player['id']
+            self.view_player = self.player_id
+        else:
+            if data['game']['players'][self.player_id]['hp'] <= 0:
+                self.quit()
+                return
+            if data['game']['players'][self.view_player]['hp'] <= 0:
+                self.view_player = self.player_id
+            player = data['game']['players'][self.view_player]
+            
+        if not self.state or self.state['game']['players'][self.view_player]['shop'] != player['shop']:
             self.shop_layout.update_state(player['shop'])
-        if not self.state or self.state['player']['bench'] != player['bench']:
+            
+        if not self.state or self.state['game']['players'][self.view_player]['bench'] != player['bench']:
             self.bench_layout.update_state(player['bench'])
-        if not self.state or self.state['player']['field'] != player['field']:
+            
+        if not self.state or self.state['game']['players'][self.view_player]['field'] != player['field']:
             self.field_layout.update_state(player['field'])
+            
         if not self.state or self.state['game']['state'] != game['state']:
             self.game_state_widget.update_state(game["state"])
             self.field_layout.set_game_state(game["state"]["current_state"])
+            
         if not self.state or self.state['game']['battle'] != game['battle']:
-            self.field_layout.update_battle(game['battle'][player['id']])
+            self.field_layout.update_battle(game['battle'][self.view_player])
+            
         if not self.state or self.state['player'] != player:
             self.player_layout.update_state(player)
+            
+        if not self.state or self.state['game']['rank'] != game['rank']:
+            self.map_widget.update_state(game['rank'])
+            
         self.state = data
         self.refresh_style()
+        
+    def set_view_player(self, index):
+        if self.state:
+            self.view_player = self.state['game']['rank'][index]['id']
+            self.state = None
         
     def view_unit(self, where, index):
         if self.state and self.state['player']:
             self.unit_widget.update_state(self.state['player'][where]['units'][index])
         
     def send_command(self, action, *args):    
-        return self.parent.run_async(self.parent.socket_thread.send_command(action, args))
+        if self.view_player == self.player_id or action == "quit_game":
+            return self.parent.run_async(self.parent.socket_thread.send_command(action, args))
     
     def select_bench(self, index):
         self.bench_index = index
