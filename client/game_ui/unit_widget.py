@@ -92,7 +92,7 @@ class UnitWidget(BaseWidget):
                 'synergy': [],
                 'item': [],
                 'status': {
-                    "hp": 0, "mp": 0, "attack": 0, "defense": 0, "attackSpeed": 0,
+                    "max_hp": 0, "mp": 0, "attack": 0, "defense": 0, "attackSpeed": 0,
                     "specialAttack": 0, "specialDefense": 0, "criticalRate": 0,
                     "criticalDamage": 1, "attackRange": 0,
                 }
@@ -135,7 +135,7 @@ class UnitWidget(BaseWidget):
         self.synergy_label.setText(f"Synergy {', '.join(unit['synergy']) if unit['synergy'] else 'None'}")
         self.item_label.setText(f"Item {', '.join(unit['item']) if unit['item'] else 'None'}")
 
-        self.hp_label.setText(f"❤️ {int(unit['status']['hp'])}")
+        self.hp_label.setText(f"❤️ {int(unit['status']['max_hp'])}")
         self.mp_label.setText(f"🔵 {int(unit['status']['mp'])}")
         self.attack_label.setText(f"ATK {int(unit['status']['attack'])}")
         self.defense_label.setText(f"DEF {int(unit['status']['defense'])}")
