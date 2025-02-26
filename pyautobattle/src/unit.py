@@ -16,11 +16,11 @@ class Unit(Active):
         self.status = status
         self.additional_status = Status(0,0,0,0,0,0,0,0,0,0)
         self.items = []
-        self.cooldown_time = 60
+        self.cooldown_time = 0
         self.mana = 0
         self.live = True
         self.team = TEAM.HOME
-        self.move_cool = 60
+        self.move_cool = 30
         
     def observe(self):
         return {
@@ -66,13 +66,13 @@ class Unit(Active):
     def move(self):
         self.move_cool -= 1
         if self.move_cool <= 0:
-            self.move_cool = 30
+            self.move_cool = 10
             return True
         else:
             return False
         
     def cooldown(self):
-        self.cooldown_time -= 1
+        self.cooldown_time -= self.status.attackSpeed
 
     def cooldowned(self):
         return self.cooldown_time <= 0
@@ -87,7 +87,7 @@ class Unit(Active):
         other.status.hp -= damage
         self.mana += 20
         killed = False
-        self.cooldown_time = 30 / self.status.attackSpeed
+        self.cooldown_time = 10
         if other.status.hp <= 0:
             other.die()
             killed = True

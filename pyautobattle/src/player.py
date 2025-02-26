@@ -15,7 +15,7 @@ class Player(Base):
     def __init__(self, player_id, name, pool):
         self.player_id = player_id
         self.name = name
-        self.hp = 100
+        self.hp = 2
         self.field = Field()
         self.bench = Bench()
         self.shop = Shop()
@@ -29,6 +29,9 @@ class Player(Base):
         
     def is_alive(self):
         return self.hp > 0
+    
+    def get_damage(self, amount):
+        self.hp -= amount
         
     def observe(self):
         return {
@@ -74,6 +77,10 @@ class Player(Base):
         return f"{self.name} level up to {self.level}"
 
     def purchase_exp(self):
+        if not self.is_alive():
+            return {
+                MSG: [f"{self.name} is not alive"]
+            }
         if self.level >= 10:
             return {
                 MSG: [f"{self.name}'s level is max"]
@@ -93,6 +100,10 @@ class Player(Base):
             }
             
     def give_exp(self, exp_amount: int):
+        if not self.is_alive():
+            return {
+                MSG: [f"{self.name} is not alive"]
+            }
         if self.level >= 10:
             return {
                 MSG: [f"{self.name}'s level is max"]
@@ -117,6 +128,10 @@ class Player(Base):
             pass
 
     def move_unit(self, source_type: str, target_type: str, src_idx: int, trgt_idx: int):
+        if not self.is_alive():
+            return {
+                MSG: [f"{self.name} is not alive"]
+            }
         source = None
         target = None
         if source_type in ['bench', 'b']:
@@ -202,6 +217,10 @@ class Player(Base):
         return unit_name, unit_level + 1
     
     def reroll(self):
+        if not self.is_alive():
+            return {
+                MSG: [f"{self.name} is not alive"]
+            }
         if self.gold < 2:
             return {
                 MSG: [f"{self.name} has not enough gold to reroll"]
@@ -236,7 +255,12 @@ class Player(Base):
             appearance_rate = [0.05, 0.10, 0.20, 0.40, 0.25]
         return appearance_rate
     
-    def get_turn_gold(self):
+    def get_turn_gold(self, turn):
+        turn_gold = 1
+        if turn < 5:
+            turn_gold += 4
+        else:
+            turn_gold += turn // 5
         interest = min(self.gold % 10, 5)
         streak_gold = 0
         if abs(self.streak) >= 2: 
@@ -245,7 +269,23 @@ class Player(Base):
             streak_gold += 1
         if abs(self.streak) >= 6:
             streak_gold += 1
-        self.gold += interest + streak_gold
+        self.gold += interest + streak_gold + turn_gold
+    
+    def win(self):
+        self.gold += 1
+        if self.streak < 0:
+            self.streak = 1
+        else:
+            self.streak += 1
+    
+    def lose(self):
+        if self.streak > 0:
+            self.streak = -1
+        else:
+            self.streak -= 1
+    
+    def draw(self):
+        self.streak = 0
     
     def get_turn_exp(self):
         self.give_exp(2)
@@ -273,6 +313,10 @@ class Player(Base):
             self.shop.units.append(self.pool.unit_dict[chosen_unit])
 
     def purchase_unit(self, shop_idx: int):
+        if not self.is_alive():
+            return {
+                MSG: [f"{self.name} is not alive"]
+            }
         if self.shop.units[shop_idx] is None:
             return {
                 MSG: [f"{self.name} tried to buy invalid index in shop"]
@@ -317,6 +361,10 @@ class Player(Base):
         }
         
     def sell_unit(self, source_type, index: int):
+        if not self.is_alive():
+            return {
+                MSG: [f"{self.name} is not alive"]
+            }
         source = None
         if source_type in ['bench', 'b']:
             source = self.bench

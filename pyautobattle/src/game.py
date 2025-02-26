@@ -37,6 +37,7 @@ class AutoBattlerGame(Base):
         self.arena = []
         self.state = GameState.READY
         self.battle_state = {}
+        self.lose_player = []
 
     def register(self, user_id):
         self.current_players.add(user_id)
@@ -52,7 +53,7 @@ class AutoBattlerGame(Base):
             i = len(self.players)
             self.players.append(Player(f"{self.game_id}-{i}", f"{self.game_id}-{i}", pool=self.pool))
         for player in self.players:
-            player.gold = 100
+            player.gold = 0
             player.bench.add(self.pool.sample(1))
         for player in self.players:
             player.refresh_shop()
@@ -63,7 +64,7 @@ class AutoBattlerGame(Base):
         for player in self.players:
             player.refresh_shop()
             player.get_turn_exp()
-            player.get_turn_gold()
+            player.get_turn_gold(self.round)
         self.round += 1
 
     def setActive(self, value=True):
@@ -74,14 +75,15 @@ class AutoBattlerGame(Base):
         if self.state == GameState.READY: # READY -> BATTLE
             self.setActive(False)
             self.state = GameState.BATTLE
-            self.state_time = 15
+            self.state_time = 5
             self.force_placement()
             self.start_battle()
         elif self.state == GameState.BATTLE: # BATTLE -> READY
+            self.end_battle()
             self.setActive(True)
             self.state = GameState.READY
             self.next_round()
-            self.state_time = 15
+            self.state_time = 10
         else:
             raise ValueError("Invalid game state")
 
@@ -92,15 +94,27 @@ class AutoBattlerGame(Base):
         
     def to_json(self):
         return {
-            "players": [p.to_json() for p in self.players],
+            "players": self.player_to_dict(),
             "state":{
                 "round": self.round,
                 "time": self.timer,
                 "current_state": self.state.name,
                 "state_time": self.state_time,
             },
+            "rank": self.get_rank(),
             "battle": self.battle_to_json(),
         }
+        
+    def player_to_dict(self):
+        p_dict = {}
+        for p in self.players:
+            p_dict[p.player_id] = p.to_json()
+        return p_dict
+        
+    def get_rank(self):
+        sorted_players = sorted(self.players, key=lambda player: player.hp)[::-1]
+        rank = [{'id': player.player_id, 'hp': player.hp} for player in sorted_players]
+        return rank
     
     def get_player_by_index(self, index):
         return self.players[index]
@@ -111,8 +125,8 @@ class AutoBattlerGame(Base):
                 return player
         return None
     
-    def get_winner():
-        return None
+    def get_winner(self):
+        return [self.get_live_players()[0].player_id,] + self.lose_player[::-1]
     
     def step(self, frame: int):
         self.check_end()
@@ -255,18 +269,36 @@ class AutoBattlerGame(Base):
         
         def who_win(_arena):
             team_list = [u['unit'].team for u in _arena]
-            check_home = TEAM.HOME in team_list
-            check_away = TEAM.AWAY in team_list
-            if check_home and check_away:
-                return BattleState.DRAW, BattleState.DRAW
-            elif check_home:
-                return BattleState.WIN, BattleState.LOSE
-            elif check_away:
-                return BattleState.LOSE, BattleState.WIN
+            count_home = team_list.count(TEAM.HOME)
+            count_away = team_list.count(TEAM.AWAY)
+            if count_home and count_away:
+                return BattleState.DRAW, BattleState.DRAW, self.round, self.round
+            elif count_home:
+                return BattleState.WIN, BattleState.LOSE, 0, self.round + count_home
+            elif count_away:
+                return BattleState.LOSE, BattleState.WIN, self.round + count_away, 0
             else:
-                return BattleState.DRAW, BattleState.DRAW
+                return BattleState.DRAW, BattleState.DRAW, self.round, self.round
                 
+        damage_dict = {}
         for i, _arena in enumerate(self.arena):
-            home_state, away_state = who_win(_arena)
-            self.battle_state[self.matchup[i][0].player_id] = home_state
-            self.battle_state[self.matchup[i][1].player_id] = away_state
+            home_state, away_state, home_damage, away_damage = who_win(_arena)
+            home_pid = self.matchup[i][0].player_id
+            away_pid = self.matchup[i][1].player_id
+            self.battle_state[home_pid] = home_state
+            self.battle_state[away_pid] = away_state
+            damage_dict[home_pid] = home_damage
+            damage_dict[away_pid] = away_damage
+        
+        for pid, state in self.battle_state.items():
+            player = self.get_player_by_user_id(pid)
+            if state == BattleState.WIN:
+                player.win()
+            else:
+                player.get_damage(damage_dict[pid])
+                if state == BattleState.DRAW:
+                    player.draw()
+                else:
+                    player.lose()
+                if not player.is_alive():
+                    self.lose_player.append(player.player_id)
