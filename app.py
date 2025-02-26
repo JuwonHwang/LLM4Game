@@ -33,9 +33,9 @@ class GameUI(BaseWidget):
         icon = QIcon(pixmap)
         self.setWindowIcon(icon)
         
-        self.loop = loop  # PyQt에서 이벤트 루프를 저장
+        self.loop = loop
         
-        self.socket_thread = SocketThread(loop, SERVER_URL)
+        self.socket_thread = SocketThread(self, loop, SERVER_URL)
         self.socket_thread.update_ui.connect(self.update_interface)
         self.socket_thread.start()
 
