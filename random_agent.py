@@ -82,22 +82,89 @@ class RandomAgentClient:
             for game_id in games:
                 if self.state['user']['game_id'] is None:
                     await self.send_command('register_game', game_id)
+        else:
+            await self.send_command('register_game')
         pass
 
-    async def get_valid_actions(self, money, data):
-        actions = ['purchase_exp', 'purchase_unit', 'reroll', 'sell_unit', 'move_unit']
-        shop_units = data['shop']['units']
-        valid_shop_index = [i for i in range(5) if shop_units[i] is not None and money >= shop_units[i]['cost']]
-        valid_sell_pairs = {}
+    def get_valid_actions(self, money, data):
+        actions = ['buy_exp', 'buy_unit', 'reroll', 'sell_unit', 'move_unit', 'none']
+        # probs = {
+        #     'buy_exp': 0.2,
+        #     'buy_unit': 0.2,
+        #     'reroll': 0.1,
+        #     'sell_unit': 0.1,
+        #     'move_unit': 0.2,
+        #     'none': 0.2,
+        # }
+        shop_units = data['player']['shop']['units']
+        bench_units = data['player']['bench']['units']
+        field_units = data['player']['field']['units']
+        
+        shop_num_slots = data['player']['shop']['num_slots']
+        bench_num_slots = data['player']['bench']['num_slots']
+        field_num_slots = data['player']['field']['num_slots']
+        
+        valid_shop_index = [i for i in range(shop_num_slots) if shop_units[i] is not None and money >= shop_units[i]['cost']]
+        
+        valid_bench_positions = []
+        for bench_index, bench_unit in enumerate(bench_units):
+            if bench_unit is not None:
+                valid_bench_positions.append(bench_index)
+        
+        valid_field_positions = []
+        for field_index, field_unit in enumerate(field_units):
+            if field_unit is not None:
+                valid_field_positions.append(field_index)
+                
+        valid_source_positions = []
+        for bench_pos in valid_bench_positions:
+            valid_source_positions.append(('bench', bench_pos))
+        for field_pos in valid_field_positions:
+            valid_source_positions.append(('field', field_pos))
+        
+        valid_target_positions = []
+        for i in range(bench_num_slots):
+            valid_target_positions.append(('bench', i))
+        for i in range(field_num_slots):
+            valid_target_positions.append(('field', i))
+        
         # TODO
         extra = {
-            'purchase_exp': None,
-            'reroll': None,
-            'purchase_unit': random.randint(0,4),
-            'sell_unit': [],
-            'move_unit': [random.randint(0,27)],
+            'buy_exp': [None,],
+            'reroll': [None,],
+            'buy_unit': valid_shop_index,
+            'sell_unit': valid_source_positions,
+            'move_unit': [valid_source_positions, valid_target_positions],
         }
-
+        
+        if money < 4:
+            actions.remove('buy_exp')
+            extra.pop('buy_exp')
+        if money < 2:
+            actions.remove('reroll')
+            extra.pop('reroll')
+        if len(valid_shop_index) == 0:
+            actions.remove('buy_unit')
+            extra.pop('buy_unit')
+        if len(valid_source_positions) == 0:
+            actions.remove('sell_unit')
+            extra.pop('sell_unit')
+            actions.remove('move_unit')
+            extra.pop('move_unit')
+        return actions, extra
+    
+    async def get_action(self, actions, extra):
+        action = random.choice(actions)
+        if action == 'none':
+            return None, None
+        elif action == 'move_unit':
+            source = random.choice(extra[action][0])
+            target = random.choice(extra[action][1])
+            return action, source + target
+        else:
+            arg = random.choice(extra[action])
+            return action, arg        
+        
     async def step(self):
         await self.send_command('login', self.user_id)
         count = 0
@@ -106,7 +173,11 @@ class RandomAgentClient:
             if self.state['user'] and self.state['user']['game_id'] is None:
                 await self.find_game()
             if self.state['user']['playing']:
-                print(count)
+                actions, extra = self.get_valid_actions(self.state['game']['player']['gold'], self.state['game'])
+                action, arg = await self.get_action(actions, extra)
+                if action is not None and self.state['game']['player']['hp'] > 0:
+                    print(action, arg)
+                    await self.send_command(action, arg)
                 count += 1
             
     
