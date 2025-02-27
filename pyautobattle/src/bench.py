@@ -39,6 +39,7 @@ class Bench(Base):
     def to_json(self):
         return {
             'max_units': self.max_units,
+            'num_slots': self.num_slots,
             'units': [unit.to_json() if unit is not None else None for unit in self.units]
         }
     
