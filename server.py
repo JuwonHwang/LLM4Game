@@ -51,7 +51,6 @@ class GameServer:
         if os.path.exists(self.user_db_path):
             with open(self.user_db_path, 'r', encoding='utf-8') as file:
                 self.user_info = json.load(file)
-                print(self.user_info)
                 print("user_file loaded")
         else:
             self.user_info = {}
@@ -80,9 +79,12 @@ class GameServer:
         self.sid_to_user[sid] = user_id
         
         if user_id not in self.user_info.keys():
-            self.user_info[user_id] = {'user_id': user_id, 'score': 100, 'playing': False, 'game_id': None, 'player_id': -1}
+            self.user_info[user_id] = {'user_id': user_id, 'score': 100, 'playing': False, 'game_id': None}
             self.save_user_db()
             await self.log(sid, f'User {user_id} created')
+        else:
+            self.user_info[user_id]['playing'] = False
+            self.user_info[user_id]['game_id'] = None
         
         await self.log(sid, f'User {user_id} logged in')
         await self.send_user_state(sid)
@@ -117,7 +119,6 @@ class GameServer:
         game.register(user_id)
         self.rooms[game_id].append(sid)
         self.user_info[user_id]['game_id'] = game_id
-        self.user_info[user_id]['player_id'] = len(game.current_players)
         await self.send_user_state(sid)
         if len(game.current_players) > 8:
             await self.sio.emit('response', 'ERROR: Max # of players reached', to=sid)
@@ -126,6 +127,12 @@ class GameServer:
             await self.sio.emit('response', f'You joined {game_id}', to=sid)
             await self.send_lobby_state(game_id)
             await self.send_home_state()
+            if len(game.current_players) == 8:
+                self.games[game_id].start()
+                asyncio.create_task(self.run_battle(game_id))
+                await self.send_game_state(game_id)
+                await self.send_home_state()
+                await self.log(sid, f"game {game_id} start")
             return True
     
     async def start_game(self, sid, game_id=None):
@@ -133,11 +140,14 @@ class GameServer:
         game_id = game_id if user_id == 'ADMIN' else await self.get_game_id(sid)
 
         if game_id and game_id in self.games:
-            self.games[game_id].start()
-            asyncio.create_task(self.run_battle(game_id))
-            await self.send_game_state(game_id)
-            await self.send_home_state()
-            await self.log(sid, f"game {game_id} start")
+            if not self.games[game_id].running:
+                self.games[game_id].start()
+                asyncio.create_task(self.run_battle(game_id))
+                await self.send_game_state(game_id)
+                await self.send_home_state()
+                await self.log(sid, f"game {game_id} start")
+            else:
+                await self.log(sid, f"game {game_id} already start")
             return True
         else:
             await self.sio.emit('response', 'ERROR: Invalid game ID', to=sid)
@@ -182,7 +192,7 @@ class GameServer:
         game.stop()
         self.save_user_db()
         
-        while self.rooms[game_id]:
+        while game_id in self.rooms.keys() and self.rooms[game_id]:
             sid = self.rooms[game_id][0]
             await self.quit_game(sid)
     
