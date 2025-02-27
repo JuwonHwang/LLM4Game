@@ -43,4 +43,4 @@ class HomeScreen(BaseWidget):
     def update_game_list(self, games):
         self.game_list.clear()
         for game in games:
-            self.game_list.addItem(game)
+            self.game_list.addItem(f'{game}')
