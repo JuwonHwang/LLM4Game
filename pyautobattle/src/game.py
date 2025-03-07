@@ -8,6 +8,7 @@ import random
 import copy
 from .util import TEAM, astar
 
+MSG = 'message'
 ROW = 8
 COL = 7
 
@@ -38,6 +39,7 @@ class AutoBattlerGame(Base):
         self.state = GameState.READY
         self.battle_state = {}
         self.lose_player = []
+        self.replay = []
 
     def register(self, user_id):
         self.current_players.add(user_id)
@@ -47,18 +49,21 @@ class AutoBattlerGame(Base):
         return len(self.current_players)
 
     def start(self):
-        for user_id in list(self.current_players):
-            self.players.append(Player(user_id, f"{user_id}", pool=self.pool))
-        while len(self.players) < 8:
-            i = len(self.players)
-            self.players.append(Player(f"{self.game_id}-{i}", f"{self.game_id}-{i}", pool=self.pool))
-        for player in self.players:
-            player.gold = 0
-            player.bench.add(self.pool.sample(1))
-        for player in self.players:
-            player.refresh_shop()
-        self.running = True
-        self.setActive(True)
+        if not self.running:
+            # print("Players in ", {self.game_id}, ":", len(self.current_players))
+            assert len(self.current_players) <= 8
+            for user_id in list(self.current_players):
+                self.players.append(Player(user_id, f"{user_id}", pool=self.pool))
+            while len(self.players) < 8:
+                i = len(self.players)
+                self.players.append(Player(f"{self.game_id}-{i}", f"{self.game_id}-{i}", pool=self.pool))
+            for player in self.players:
+                player.gold = 0
+                player.bench.add(self.pool.sample(1))
+            for player in self.players:
+                player.refresh_shop()
+            self.running = True
+            self.setActive(True)
 
     def next_round(self):
         for player in self.players:
@@ -72,6 +77,7 @@ class AutoBattlerGame(Base):
             player.active = value
 
     def next_state(self):
+        result = None
         if self.state == GameState.READY: # READY -> BATTLE
             self.setActive(False)
             self.state = GameState.BATTLE
@@ -79,13 +85,14 @@ class AutoBattlerGame(Base):
             self.force_placement()
             self.start_battle()
         elif self.state == GameState.BATTLE: # BATTLE -> READY
-            self.end_battle()
+            result = self.end_battle()
             self.setActive(True)
             self.state = GameState.READY
             self.next_round()
             self.state_time = 10
         else:
             raise ValueError("Invalid game state")
+        return result
 
     def observe(self):
         return {
@@ -112,8 +119,8 @@ class AutoBattlerGame(Base):
         return p_dict
         
     def get_rank(self):
-        sorted_players = sorted(self.players, key=lambda player: player.hp)[::-1]
-        rank = [{'id': player.player_id, 'hp': player.hp} for player in sorted_players]
+        players = [{'id': player.player_id, 'hp': player.hp} for player in self.players]
+        rank = sorted(players, key=lambda player: player["hp"])[::-1]
         return rank
     
     def get_player_by_index(self, index):
@@ -126,9 +133,15 @@ class AutoBattlerGame(Base):
         return None
     
     def get_winner(self):
-        return [self.get_live_players()[0].player_id,] + self.lose_player[::-1]
+        winner = self.get_live_players()
+        if winner:
+            return [self.get_live_players()[0].player_id,] + self.lose_player[::-1]
+        else:
+            return self.lose_player[::-1]
     
     def step(self, frame: int):
+        result = None
+        self.replay.append(self.to_json())
         self.check_end()
         self.timer += 1 / frame
         
@@ -138,7 +151,8 @@ class AutoBattlerGame(Base):
                 
         if self.timer > self.state_time:
             self.timer = 0
-            self.next_state()
+            result = self.next_state()
+        return result
             
     def check_end(self):
         live_players = self.get_live_players()
@@ -266,7 +280,7 @@ class AutoBattlerGame(Base):
                 _arena.pop(i)
                 
     def end_battle(self):
-        
+        battle_result = []
         def who_win(_arena):
             team_list = [u['unit'].team for u in _arena]
             count_home = team_list.count(TEAM.HOME)
@@ -289,16 +303,30 @@ class AutoBattlerGame(Base):
             self.battle_state[away_pid] = away_state
             damage_dict[home_pid] = home_damage
             damage_dict[away_pid] = away_damage
+            if home_state == BattleState.WIN:
+                battle_result.append(f"{home_pid} defeated {away_pid}")
+            elif home_state == BattleState.DRAW:
+                battle_result.append(f"{home_pid} and {away_pid} tied")
+            else:
+                battle_result.append(f"{away_pid} defeated {home_pid}")
         
         for pid, state in self.battle_state.items():
             player = self.get_player_by_user_id(pid)
             if state == BattleState.WIN:
                 player.win()
             else:
-                player.get_damage(damage_dict[pid])
                 if state == BattleState.DRAW:
                     player.draw()
                 else:
                     player.lose()
+                player.get_damage(damage_dict[pid])
+                battle_result.append(f"{player.player_id} takes {damage_dict[pid]} damage")
                 if not player.is_alive():
                     self.lose_player.append(player.player_id)
+                    battle_result.append(f"{player.player_id} was eliminated")
+        return {
+            MSG: battle_result
+        }
+                    
+    def get_replay(self):
+        return self.replay

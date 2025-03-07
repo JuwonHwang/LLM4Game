@@ -15,7 +15,7 @@ class Player(Base):
     def __init__(self, player_id, name, pool):
         self.player_id = player_id
         self.name = name
-        self.hp = 2
+        self.hp = 30
         self.field = Field()
         self.bench = Bench()
         self.shop = Shop()
@@ -117,23 +117,25 @@ class Player(Base):
                 MSG: messages
             }
 
-    def swap(self, where: list[Unit], src_idx: int, trgt_idx: int):
-        if src_idx > trgt_idx:
-            _unit = where.pop(src_idx)
-            where.insert(trgt_idx, _unit)
-        elif src_idx < trgt_idx:
-            _unit = where.pop(src_idx)
-            where.insert(trgt_idx - 1, _unit)
+    def swap(self, where: list[Unit], source_index: int, target_index: int):
+        if source_index > target_index:
+            _unit = where.pop(source_index)
+            where.insert(target_index, _unit)
+        elif source_index < target_index:
+            _unit = where.pop(source_index)
+            where.insert(target_index - 1, _unit)
         else:
             pass
 
-    def move_unit(self, source_type: str, target_type: str, src_idx: int, trgt_idx: int):
+    def move_unit(self, source_type: str, target_type: str, source_index: int, target_index: int):
         if not self.is_alive():
             return {
                 MSG: [f"{self.name} is not alive"]
             }
         source = None
         target = None
+        source_index = int(source_index)
+        target_index = int(target_index)
         if source_type in ['bench', 'b']:
             source_type = 'bench'
             source:Bench = self.bench
@@ -146,43 +148,43 @@ class Player(Base):
         else:
             target_type = 'field'
             target:Field = self.field
-        if src_idx > source.num_slots or trgt_idx > target.num_slots:
+        if source_index > source.num_slots or target_index > target.num_slots:
             return {
                 MSG: [f"{self.name} tried invalid pop or insert"]
             }
-        elif src_idx < 0:
+        elif source_index < 0:
             return {
                 MSG: [f"{self.name} tried invalid pop or insert"]
             }
         try:
-            source_unit = source.pop(src_idx)
+            source_unit = source.pop(source_index)
             if source_unit is None:
                 return {
                     MSG: [f"{self.name} tried to move none"]
                 }
-            target_unit = target.pop(trgt_idx)
-            if trgt_idx == -1:
+            target_unit = target.pop(target_index)
+            if target_index == -1:
                 if target_type == source_type:
-                    source.units[src_idx] = source_unit
+                    source.units[source_index] = source_unit
                     return {
                         MSG: [f"{self.name} invalid move"]
                     }
-                trgt_idx = target.find_empty()
-            if src_idx == trgt_idx and source_type == target_type:
-                source.units[src_idx] = source_unit
+                target_index = target.find_empty()
+            if source_index == target_index and source_type == target_type:
+                source.units[source_index] = source_unit
                 return {
                     MSG: [f"{self.name} move same position"]
                 }
             elif target.is_full():
-                source.units[src_idx] = source_unit
-                target.units[trgt_idx] = target_unit
+                source.units[source_index] = source_unit
+                target.units[target_index] = target_unit
                 return {
                     MSG: [f"{self.name} {target_type} is full"]
                 }
-            target.units[trgt_idx] = source_unit
-            source.units[src_idx] = target_unit
+            target.units[target_index] = source_unit
+            source.units[source_index] = target_unit
             return {
-                MSG: [f"{self.name} moved {source_unit.name} ({source_type},{src_idx}) <-> {target_unit.name if target_unit is not None else None} ({target_type},{trgt_idx})"]
+                MSG: [f"{self.name} moved {source_unit.name} ({source_type},{source_index}) <-> {target_unit.name if target_unit is not None else None} ({target_type},{target_index})"]
             }
         except Exception as e:
             return {
@@ -346,15 +348,14 @@ class Player(Base):
                     self.field.add(self.pool.get_unit(unit_name, 2))
                 messages.append(f"{self.name} upgrade {unit_name} to level 2")
             else:
-                return {
-                    MSG: [f"{self.name} does not have enough bench room."]
-                }
+                messages.append(f"{self.name} does not have enough bench room.")
+                return messages
         self.gold -= purchased_unit.cost
         self.shop.units[shop_idx] = None
         for i in range(1,4):
             upgrade_name, upgrade_level = self.upgrade(purchased_unit.name, unit_level=i)
             if upgrade_name is not None:
-                messages.append(f"{self.name} upgrade {upgrade_name} to level {upgrade_level}")
+                messages.append(f"{self.name} upgrade ({upgrade_name}, {upgrade_level})")
         messages.append(f"{self.name} successfully bought {unit_name}.")
         return {
             MSG: messages
@@ -380,7 +381,7 @@ class Player(Base):
             self.gold += earn_gold
             self.pool.add_unit(_unit)
             return {
-                MSG: [f"{self.name} selled level {_unit.level} - {_unit.name}, earned {earn_gold} gold."]
+                MSG: [f"{self.name} sold level {_unit.level} - {_unit.name}, earned {earn_gold} gold."]
             }
     
     def add_gold(self, amount: int):

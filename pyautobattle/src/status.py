@@ -46,14 +46,14 @@ class Status(Base):
         return {
             "max_hp": self.max_hp,
             "hp": self.hp,
-            "mp": self.mp,
+            # "mp": self.mp,
             "attack": self.attack,
             "defense": self.defense,
             "attackSpeed": self.attackSpeed,
-            "specialAttack": self.specialAttack,
-            "specialDefense": self.specialDefense,
-            "criticalRate": self.criticalRate,
-            "criticalDamage": self.criticalDamage,
+            # "specialAttack": self.specialAttack,
+            # "specialDefense": self.specialDefense,
+            # "criticalRate": self.criticalRate,
+            # "criticalDamage": self.criticalDamage,
             "attackRange": self.attackRange,
         }
     

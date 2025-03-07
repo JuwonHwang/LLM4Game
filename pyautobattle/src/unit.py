@@ -38,9 +38,9 @@ class Unit(Active):
             "cost": self.cost,
             "price": self.get_sell_gold(),
             "level": self.level,
-            "synergy": self.synergy,
-            "item": [item.to_json() for item in self.items],
-            "mana": self.mana,
+            # "synergy": self.synergy,
+            # "item": [item.to_json() for item in self.items],
+            # "mana": self.mana,
             "status": self.status.to_json(),
             "team": self.team.value
         }
