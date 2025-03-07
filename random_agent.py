@@ -24,6 +24,8 @@ class RandomAgentClient:
         self.where = 'home'
         self.update = True
         self.connected = False
+        self.end = False
+        self.messages = []
         self.state = {"user": {}, "home": {}, "lobby": {}, "game": {}}
         self.register_events()
 
@@ -41,10 +43,18 @@ class RandomAgentClient:
         @self.sio.event
         async def response(data):
             print(f"{data}")
+            try:
+                self.messages.append(json.loads(data))
+            except Exception as e:
+                pass 
             
         @self.sio.event
         async def game_end():
             self.state['game'] = None
+
+        @self.sio.event
+        async def game_over():
+            self.end = True
 
         @self.sio.event
         async def update_home(data):
@@ -61,11 +71,16 @@ class RandomAgentClient:
         @self.sio.event
         async def update_user(data):
             self.state['user'] = data
+            
+        async def quit():
+            if self.state and self.state['user'] and self.state['user']['playing']:
+                self.state['user']['playing'] = False
 
     async def connect_to_server(self):
         await self.sio.connect(self.server_url)
         await self.step()
         # await self.sio.wait()
+        return
 
     async def send_command(self, action, params=None):
         if self.sio.connected:
@@ -88,14 +103,7 @@ class RandomAgentClient:
 
     def get_valid_actions(self, money, data):
         actions = ['buy_exp', 'buy_unit', 'reroll', 'sell_unit', 'move_unit', 'none']
-        # probs = {
-        #     'buy_exp': 0.2,
-        #     'buy_unit': 0.2,
-        #     'reroll': 0.1,
-        #     'sell_unit': 0.1,
-        #     'move_unit': 0.2,
-        #     'none': 0.2,
-        # }
+
         shop_units = data['player']['shop']['units']
         bench_units = data['player']['bench']['units']
         field_units = data['player']['field']['units']
@@ -160,7 +168,7 @@ class RandomAgentClient:
         elif action == 'move_unit':
             source = random.choice(extra[action][0])
             target = random.choice(extra[action][1])
-            return action, source + target
+            return action, (source[0], target[0], source[1], target[1])
         else:
             arg = random.choice(extra[action])
             return action, arg        
@@ -168,18 +176,29 @@ class RandomAgentClient:
     async def step(self):
         await self.send_command('login', self.user_id)
         count = 0
-        while True:
-            await asyncio.sleep(1)  # 1초마다 실행
+        while not self.end:
             if self.state['user'] and self.state['user']['game_id'] is None:
                 await self.find_game()
-            if self.state['user']['playing']:
+            elif self.state['user'] and self.state['user']['game_id'] is not None:
+                break
+            await asyncio.sleep(0.1)
+        while not self.end:
+            if self.state and self.state['user'] and self.state['user']['playing']:
                 actions, extra = self.get_valid_actions(self.state['game']['player']['gold'], self.state['game'])
-                action, arg = await self.get_action(actions, extra)
-                if action is not None and self.state['game']['player']['hp'] > 0:
-                    print(action, arg)
-                    await self.send_command(action, arg)
-                count += 1
-            
+                if self.state["game"]["player"]["active"] and self.state['game']['player']['hp'] > 0:
+                    action, arg = await self.get_action(actions, extra)
+                    if action is not None:
+                        await self.send_command(action, arg)
+                    count += 1
+            await asyncio.sleep(1)  # 1초마다 실행
+        await self.send_command("quit_game", None)
+        await self.close()
+        return
+    
+    async def close(self):
+        if self.sio.connected:
+            await self.sio.disconnect()  # Properly close the socket connection
+            print(f"{self.user_id} disconnected.")
     
 if __name__ == '__main__':
     if len(sys.argv) < 2:
@@ -191,4 +210,4 @@ if __name__ == '__main__':
 
     loop = asyncio.get_event_loop()
     loop.create_task(client.connect_to_server())
-    loop.run_forever()
+    loop.run_until_complete()
