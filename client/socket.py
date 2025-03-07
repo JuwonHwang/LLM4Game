@@ -10,8 +10,9 @@ from PyQt6.QtCore import QThread, pyqtSignal
 class SocketThread(QThread):
     update_ui = pyqtSignal(dict)
     
-    def __init__(self, loop, server_url):
+    def __init__(self, parent, loop, server_url):
         super().__init__()
+        self.parent = parent
         self.sio = socketio.AsyncClient()
         self.server_url = server_url
         self.state = {"user": {}, "home": {}, "lobby": {}, "game": {}}
@@ -53,7 +54,13 @@ class SocketThread(QThread):
         @self.sio.event
         async def response(data):
             print(f"{data}")
-                    
+            
+        @self.sio.event
+        async def game_end():
+            self.state.pop('game')
+            if self.parent is not None:
+                self.parent.stacked_widget.setCurrentWidget(self.parent.home_screen)
+
         @self.sio.event
         async def update_home(data):
             self.state['home'] = data

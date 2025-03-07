@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QApplication, QWidget, QHBoxLayout, QPushButton, QVBoxLayout, QLabel
+from PyQt6.QtWidgets import QApplication, QWidget, QHBoxLayout, QPushButton, QVBoxLayout, QLabel, QSizePolicy
 from ..game_ui.util import unit_to_text
 from ..baseWidget import BaseWidget
 from .drag_widget import DraggableLabel
@@ -17,10 +17,11 @@ class BenchWidget(BaseWidget):
         
         button_names = [None for _ in range(9)]
         for index, name in enumerate(button_names):
-            btn = DraggableLabel(name, 'bench', index)
-            btn.clicked.connect(lambda _, i=index: self.parent.view_unit('bench', i))
-            self.button_layout.addWidget(btn)
-            self.buttons.append(btn) 
+            button = DraggableLabel(self, name, 'bench', index)
+            button.clicked.connect(lambda _, i=index: self.parent.view_unit('bench', i))
+            self.button_layout.addWidget(button)
+            self.buttons.append(button) 
+            
 
         main_layout.addLayout(self.button_layout)
         self.setLayout(main_layout)

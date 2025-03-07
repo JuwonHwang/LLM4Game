@@ -18,7 +18,7 @@ class ShopWidget(BaseWidget):
         
         button_names = ["button 1", "button 2", "button 3", "button 4", "button 5"]
         for index, name in enumerate(button_names):
-            btn = DraggableLabel(name, 'shop', index)
+            btn = DraggableLabel(self,name, 'shop', index)
             btn.clicked.connect(lambda _, i=index: self.parent.view_unit('shop', i))
             self.button_layout.addWidget(btn)
             self.buttons.append(btn)
@@ -31,10 +31,8 @@ class ShopWidget(BaseWidget):
         if data is None:
             pass
         else:
-            if data['source'] == "field":
-                pass
-            if data['source'] == "bench":
-                self.parent.send_command('sell_unit', data['index'])
+            if data['source'] in ["field", "bench"]:
+                self.parent.send_command('sell_unit', data['source'], data['index'])
     
     def dragEnterEvent(self, event):
         if event.mimeData().hasText():
@@ -45,8 +43,8 @@ class ShopWidget(BaseWidget):
     def dropEvent(self, event):
         data = event.mimeData().data("application/json").data().decode("utf-8")
         data = json.loads(data)
-        if data['source'] == "bench":
-            self.parent.send_command('sell_unit', data['index'])
+        if data['source'] in ["field", "bench"]:
+            self.parent.send_command('sell_unit', data['source'], data['index'])
         self.parent.refresh_style()
         event.acceptProposedAction()
                 

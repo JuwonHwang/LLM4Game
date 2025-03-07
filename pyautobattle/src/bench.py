@@ -14,6 +14,9 @@ class Bench(Base):
                 return i
         return -1
     
+    def __getitem__(self, index):
+        return self.units[index]
+    
     def add(self, unit: Unit):
         index = self.find_empty()
         if index == -1:
@@ -36,6 +39,7 @@ class Bench(Base):
     def to_json(self):
         return {
             'max_units': self.max_units,
+            'num_slots': self.num_slots,
             'units': [unit.to_json() if unit is not None else None for unit in self.units]
         }
     

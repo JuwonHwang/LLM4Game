@@ -15,7 +15,7 @@ class Player(Base):
     def __init__(self, player_id, name, pool):
         self.player_id = player_id
         self.name = name
-        self.hp = 100
+        self.hp = 30
         self.field = Field()
         self.bench = Bench()
         self.shop = Shop()
@@ -25,6 +25,13 @@ class Player(Base):
         self.exp = 0
         self.req_exp_list = [0,2,2,6,10,20,36,48,76,84, float("inf")]
         self.streak = 0
+        self.active = False
+        
+    def is_alive(self):
+        return self.hp > 0
+    
+    def get_damage(self, amount):
+        self.hp -= amount
         
     def observe(self):
         return {
@@ -55,7 +62,8 @@ class Player(Base):
             "exp": self.exp,
             "req_exp": self.get_required_exp(),
             "unit_rate": self.get_appearance_rate(),
-            "streak": self.streak
+            "streak": self.streak,
+            "active": self.active,
         }
     
     def get_required_exp(self):
@@ -69,6 +77,10 @@ class Player(Base):
         return f"{self.name} level up to {self.level}"
 
     def purchase_exp(self):
+        if not self.is_alive():
+            return {
+                MSG: [f"{self.name} is not alive"]
+            }
         if self.level >= 10:
             return {
                 MSG: [f"{self.name}'s level is max"]
@@ -88,6 +100,10 @@ class Player(Base):
             }
             
     def give_exp(self, exp_amount: int):
+        if not self.is_alive():
+            return {
+                MSG: [f"{self.name} is not alive"]
+            }
         if self.level >= 10:
             return {
                 MSG: [f"{self.name}'s level is max"]
@@ -101,19 +117,25 @@ class Player(Base):
                 MSG: messages
             }
 
-    def swap(self, where: list[Unit], src_idx: int, trgt_idx: int):
-        if src_idx > trgt_idx:
-            _unit = where.pop(src_idx)
-            where.insert(trgt_idx, _unit)
-        elif src_idx < trgt_idx:
-            _unit = where.pop(src_idx)
-            where.insert(trgt_idx - 1, _unit)
+    def swap(self, where: list[Unit], source_index: int, target_index: int):
+        if source_index > target_index:
+            _unit = where.pop(source_index)
+            where.insert(target_index, _unit)
+        elif source_index < target_index:
+            _unit = where.pop(source_index)
+            where.insert(target_index - 1, _unit)
         else:
             pass
 
-    def move_unit(self, source_type: str, target_type: str, src_idx: int, trgt_idx: int):
+    def move_unit(self, source_type: str, target_type: str, source_index: int, target_index: int):
+        if not self.is_alive():
+            return {
+                MSG: [f"{self.name} is not alive"]
+            }
         source = None
         target = None
+        source_index = int(source_index)
+        target_index = int(target_index)
         if source_type in ['bench', 'b']:
             source_type = 'bench'
             source:Bench = self.bench
@@ -126,43 +148,43 @@ class Player(Base):
         else:
             target_type = 'field'
             target:Field = self.field
-        if src_idx > source.num_slots or trgt_idx > target.num_slots:
+        if source_index > source.num_slots or target_index > target.num_slots:
             return {
                 MSG: [f"{self.name} tried invalid pop or insert"]
             }
-        elif src_idx < 0:
+        elif source_index < 0:
             return {
                 MSG: [f"{self.name} tried invalid pop or insert"]
             }
         try:
-            source_unit = source.pop(src_idx)
+            source_unit = source.pop(source_index)
             if source_unit is None:
                 return {
                     MSG: [f"{self.name} tried to move none"]
                 }
-            target_unit = target.pop(trgt_idx)
-            if trgt_idx == -1:
+            target_unit = target.pop(target_index)
+            if target_index == -1:
                 if target_type == source_type:
-                    source.units[src_idx] = source_unit
+                    source.units[source_index] = source_unit
                     return {
                         MSG: [f"{self.name} invalid move"]
                     }
-                trgt_idx = target.find_empty()
-            if src_idx == trgt_idx and source_type == target_type:
-                source.units[src_idx] = source_unit
+                target_index = target.find_empty()
+            if source_index == target_index and source_type == target_type:
+                source.units[source_index] = source_unit
                 return {
                     MSG: [f"{self.name} move same position"]
                 }
             elif target.is_full():
-                source.units[src_idx] = source_unit
-                target.units[trgt_idx] = target_unit
+                source.units[source_index] = source_unit
+                target.units[target_index] = target_unit
                 return {
                     MSG: [f"{self.name} {target_type} is full"]
                 }
-            target.units[trgt_idx] = source_unit
-            source.units[src_idx] = target_unit
+            target.units[target_index] = source_unit
+            source.units[source_index] = target_unit
             return {
-                MSG: [f"{self.name} moved {source_unit.name} ({source_type},{src_idx}) <-> {target_unit.name if target_unit is not None else None} ({target_type},{trgt_idx})"]
+                MSG: [f"{self.name} moved {source_unit.name} ({source_type},{source_index}) <-> {target_unit.name if target_unit is not None else None} ({target_type},{target_index})"]
             }
         except Exception as e:
             return {
@@ -197,6 +219,10 @@ class Player(Base):
         return unit_name, unit_level + 1
     
     def reroll(self):
+        if not self.is_alive():
+            return {
+                MSG: [f"{self.name} is not alive"]
+            }
         if self.gold < 2:
             return {
                 MSG: [f"{self.name} has not enough gold to reroll"]
@@ -231,7 +257,12 @@ class Player(Base):
             appearance_rate = [0.05, 0.10, 0.20, 0.40, 0.25]
         return appearance_rate
     
-    def get_turn_gold(self):
+    def get_turn_gold(self, turn):
+        turn_gold = 1
+        if turn < 5:
+            turn_gold += 4
+        else:
+            turn_gold += turn // 5
         interest = min(self.gold % 10, 5)
         streak_gold = 0
         if abs(self.streak) >= 2: 
@@ -240,7 +271,23 @@ class Player(Base):
             streak_gold += 1
         if abs(self.streak) >= 6:
             streak_gold += 1
-        self.gold += interest + streak_gold
+        self.gold += interest + streak_gold + turn_gold
+    
+    def win(self):
+        self.gold += 1
+        if self.streak < 0:
+            self.streak = 1
+        else:
+            self.streak += 1
+    
+    def lose(self):
+        if self.streak > 0:
+            self.streak = -1
+        else:
+            self.streak -= 1
+    
+    def draw(self):
+        self.streak = 0
     
     def get_turn_exp(self):
         self.give_exp(2)
@@ -268,6 +315,10 @@ class Player(Base):
             self.shop.units.append(self.pool.unit_dict[chosen_unit])
 
     def purchase_unit(self, shop_idx: int):
+        if not self.is_alive():
+            return {
+                MSG: [f"{self.name} is not alive"]
+            }
         if self.shop.units[shop_idx] is None:
             return {
                 MSG: [f"{self.name} tried to buy invalid index in shop"]
@@ -297,32 +348,40 @@ class Player(Base):
                     self.field.add(self.pool.get_unit(unit_name, 2))
                 messages.append(f"{self.name} upgrade {unit_name} to level 2")
             else:
-                return {
-                    MSG: [f"{self.name} does not have enough bench room."]
-                }
+                messages.append(f"{self.name} does not have enough bench room.")
+                return messages
         self.gold -= purchased_unit.cost
         self.shop.units[shop_idx] = None
         for i in range(1,4):
             upgrade_name, upgrade_level = self.upgrade(purchased_unit.name, unit_level=i)
             if upgrade_name is not None:
-                messages.append(f"{self.name} upgrade {upgrade_name} to level {upgrade_level}")
+                messages.append(f"{self.name} upgrade ({upgrade_name}, {upgrade_level})")
         messages.append(f"{self.name} successfully bought {unit_name}.")
         return {
             MSG: messages
         }
         
-    def sell_unit(self, bench_idx: int):
-        if len(self.bench.units) <= bench_idx or self.bench.units[bench_idx] is None:
+    def sell_unit(self, source_type, index: int):
+        if not self.is_alive():
             return {
-                MSG: [f"{self.name} does not have unit at bench index {bench_idx}."]
+                MSG: [f"{self.name} is not alive"]
+            }
+        source = None
+        if source_type in ['bench', 'b']:
+            source = self.bench
+        else:
+            source = self.field
+        if source.units[index] is None:
+            return {
+                MSG: [f"{self.name} does not have unit at {source_type} index {index}."]
             }
         else:
-            _unit = self.bench.pop(bench_idx)
+            _unit = source.pop(index)
             earn_gold = _unit.get_sell_gold()
             self.gold += earn_gold
             self.pool.add_unit(_unit)
             return {
-                MSG: [f"{self.name} selled level {_unit.level} - {_unit.name}, earned {earn_gold} gold."]
+                MSG: [f"{self.name} sold level {_unit.level} - {_unit.name}, earned {earn_gold} gold."]
             }
     
     def add_gold(self, amount: int):
@@ -330,3 +389,6 @@ class Player(Base):
         return {
                 MSG: [f"{self.name} gold + 100."]
         }
+        
+    def play_randomly(self):
+        pass

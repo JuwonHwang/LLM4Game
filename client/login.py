@@ -27,7 +27,7 @@ class LoginScreen(BaseWidget):
         self.username_input = QLineEdit()
         self.username_input.setPlaceholderText("Enter your username")
         self.username_input.setText("test")
-        form_layout.addRow("Username:", self.username_input)
+        form_layout.addRow("Username", self.username_input)
 
         # 로그인 버튼
         self.login_button = QPushButton("🔑 Login")

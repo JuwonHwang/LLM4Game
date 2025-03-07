@@ -4,7 +4,7 @@ import json
 import math
 import random
 import copy
-# from .color import *
+from .util import TEAM
 
 class Unit(Active):
     def __init__(self, name: str, cost: int, level: int, status: Status, synergy: list[str]):
@@ -19,6 +19,8 @@ class Unit(Active):
         self.cooldown_time = 0
         self.mana = 0
         self.live = True
+        self.team = TEAM.HOME
+        self.move_cool = 30
         
     def observe(self):
         return {
@@ -36,10 +38,11 @@ class Unit(Active):
             "cost": self.cost,
             "price": self.get_sell_gold(),
             "level": self.level,
-            "synergy": self.synergy,
-            "item": [item.to_json() for item in self.items],
-            "mana": self.mana,
-            "status": self.status.to_json()
+            # "synergy": self.synergy,
+            # "item": [item.to_json() for item in self.items],
+            # "mana": self.mana,
+            "status": self.status.to_json(),
+            "team": self.team.value
         }
 
     def get_combat_mode(self):
@@ -53,12 +56,26 @@ class Unit(Active):
 
     def die(self):
         self.live = False
+    
+    def alive(self):
+        return self.live
 
     def update(self):
         self.cooldown()
-
+    
+    def move(self):
+        self.move_cool -= 1
+        if self.move_cool <= 0:
+            self.move_cool = 10
+            return True
+        else:
+            return False
+        
     def cooldown(self):
-        self.cooldown_time -= 1 / 1000
+        self.cooldown_time -= self.status.attackSpeed
+
+    def cooldowned(self):
+        return self.cooldown_time <= 0
 
     def hit(self, other):
         if not isinstance(other, Unit):
@@ -70,6 +87,7 @@ class Unit(Active):
         other.status.hp -= damage
         self.mana += 20
         killed = False
+        self.cooldown_time = 10
         if other.status.hp <= 0:
             other.die()
             killed = True
@@ -88,8 +106,10 @@ class Unit(Active):
             copy.deepcopy(self.cost, memo),
             copy.deepcopy(self.level, memo),
             copy.deepcopy(self.status, memo),
-            copy.deepcopy(self.synergy, memo)
+            copy.deepcopy(self.synergy, memo),
+            
         )
+        
         # Deep copy additional attributes
         self.cooldown_time = copy.deepcopy(self.cooldown_time, memo)
         self.mana = copy.deepcopy(self.mana, memo)

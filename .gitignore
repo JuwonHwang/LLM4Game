@@ -173,3 +173,8 @@ cython_debug/
 .server
 /db
 /qt-ui
+/config
+/replay
+/plot
+result.py
+dummy

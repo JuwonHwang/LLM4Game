@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtGui import QIcon, QPixmap, QPainter, QFont
 from PyQt6.QtCore import QThread, pyqtSignal, Qt
-from client import SocketThread, GameScreen, HomeScreen, LobbyScreen, LoginScreen
+from client import SocketThread, GameScreen, HomeScreen, LobbyScreen, LoginScreen, BaseWidget
 
 # Function to load URL from a text file
 def load_server_url(filename=".server"):
@@ -23,7 +23,7 @@ SERVER_URL = load_server_url()
 # ===========================
 # 🚀 5️⃣ 메인 UI 컨트롤러
 # ===========================
-class GameUI(QWidget):
+class GameUI(BaseWidget):
     def __init__(self, loop):
         super().__init__()
         
@@ -33,9 +33,9 @@ class GameUI(QWidget):
         icon = QIcon(pixmap)
         self.setWindowIcon(icon)
         
-        self.loop = loop  # PyQt에서 이벤트 루프를 저장
+        self.loop = loop
         
-        self.socket_thread = SocketThread(loop, SERVER_URL)
+        self.socket_thread = SocketThread(self, loop, SERVER_URL)
         self.socket_thread.update_ui.connect(self.update_interface)
         self.socket_thread.start()
 

@@ -15,6 +15,7 @@ class Status(Base):
             criticalDamage, 
             attackRange
         ):
+        self.max_hp = float(hp)
         self.hp = float(hp)
         self.mp = float(mp)
         self.attack = float(attack)
@@ -28,6 +29,7 @@ class Status(Base):
     
     def observe(self):
         return {
+            "max_hp": self.max_hp,
             "hp": self.hp,
             "mp": self.mp,
             "attack": self.attack,
@@ -42,15 +44,16 @@ class Status(Base):
         
     def to_json(self):
         return {
+            "max_hp": self.max_hp,
             "hp": self.hp,
-            "mp": self.mp,
+            # "mp": self.mp,
             "attack": self.attack,
             "defense": self.defense,
             "attackSpeed": self.attackSpeed,
-            "specialAttack": self.specialAttack,
-            "specialDefense": self.specialDefense,
-            "criticalRate": self.criticalRate,
-            "criticalDamage": self.criticalDamage,
+            # "specialAttack": self.specialAttack,
+            # "specialDefense": self.specialDefense,
+            # "criticalRate": self.criticalRate,
+            # "criticalDamage": self.criticalDamage,
             "attackRange": self.attackRange,
         }
     

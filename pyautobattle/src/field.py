@@ -29,6 +29,7 @@ class Field(Bench):
         field_copy = type(self)()
         # Copy the max_units attribute
         field_copy.max_units = self.max_units
+        field_copy.num_slots = self.num_slots
         # Deep copy the units list
         field_copy.units = copy.deepcopy(self.units, memo)
         # Store the new object in the memo dictionary

@@ -1,7 +1,8 @@
-from PyQt6.QtWidgets import QApplication, QGridLayout, QWidget, QHBoxLayout, QPushButton, QVBoxLayout, QLabel
-
+from PyQt6.QtWidgets import QApplication, QStackedWidget, QGridLayout, QWidget, QHBoxLayout, QPushButton, QVBoxLayout, QLabel
+from PyQt6.QtCore import Qt
 from ..game_ui.util import unit_to_text
 from ..baseWidget import BaseWidget
+from .battle_widget import BattleWidget
 from .drag_widget import DraggableLabel
 import json
 
@@ -11,13 +12,38 @@ class FieldWidget(BaseWidget):
         self.parent = parent
         main_layout = QHBoxLayout()
         self.left_label = QLabel("Field\n( 0 / 0 )")
-        self.right_label = QLabel()
-        main_layout.addWidget(self.left_label)
+        self.left_label.setStyleSheet("""
+            QLabel {
+                min-width: 120px;
+                
+            }
+        """)
+        self.left_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
+        self.right_label = QLabel()
+        self.right_label.setStyleSheet("""
+            QLabel {
+                min-width: 120px;
+            }
+        """)
+        self.right_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        self.field_page = QWidget()
+        self.battle_page = BattleWidget(self.parent)
+        self.stacked_widget = QStackedWidget()
+
         self.unit_layout = QGridLayout()
+        self.field_page.setLayout(self.unit_layout)
+
+        self.stacked_widget.addWidget(self.field_page)
+        self.stacked_widget.addWidget(self.battle_page)
+
+        self.stacked_widget.setCurrentWidget(self.field_page)
+    
         self.unit_buttons = [] 
         
-        main_layout.addLayout(self.unit_layout)
+        main_layout.addWidget(self.left_label)
+        main_layout.addWidget(self.stacked_widget)
         main_layout.addWidget(self.right_label)
         self.setAcceptDrops(True)  # Accept drops
         self.setLayout(main_layout)
@@ -56,6 +82,14 @@ class FieldWidget(BaseWidget):
         self.parent.refresh_style()
         event.acceptProposedAction()
 
+    def set_game_state(self, game_state):
+        if game_state == 'READY':
+            self.stacked_widget.setCurrentWidget(self.field_page)
+        elif game_state == 'BATTLE':
+            self.stacked_widget.setCurrentWidget(self.battle_page)
+        else:
+            raise ValueError("Invalid game state")
+
     def update_state(self, data):
         self.clear_button_layout()
         unit_list = data['units']
@@ -73,9 +107,9 @@ class FieldWidget(BaseWidget):
             self.unit_layout.addWidget(button, index // 7, index % 7)
         for index, unit in enumerate(unit_list):
             name = unit_to_text(unit)
-            button = DraggableLabel(name, 'field', index, unit is not None)
+            button = DraggableLabel(self, name, 'field', index, unit is not None)
             button.clicked.connect(lambda _, i=index: self.parent.view_unit('field', i))
-            self.unit_layout.addWidget(button, index // 7 + 4, index % 7)
+            self.unit_layout.addWidget(button, 8 - index // 7, index % 7)
             self.unit_buttons.append(button) 
             if unit is not None:
                 color = self.color_map[unit['cost']]
@@ -92,3 +126,6 @@ class FieldWidget(BaseWidget):
                     background-color: {hover_color};
                 }}
             """)
+            
+    def update_battle(self, data):
+        self.battle_page.update_state(data)
