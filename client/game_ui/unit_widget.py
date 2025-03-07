@@ -132,19 +132,19 @@ class UnitWidget(BaseWidget):
         self.gold_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         # self.level_label.setText(f"⭐ {unit['level']}")
 
-        self.synergy_label.setText(f"Synergy {', '.join(unit['synergy']) if unit['synergy'] else 'None'}")
-        self.item_label.setText(f"Item {', '.join(unit['item']) if unit['item'] else 'None'}")
+        # self.synergy_label.setText(f"Synergy {', '.join(unit['synergy']) if unit['synergy'] else 'None'}")
+        # self.item_label.setText(f"Item {', '.join(unit['item']) if unit['item'] else 'None'}")
 
         self.hp_label.setText(f"❤️ {int(unit['status']['max_hp'])}")
-        self.mp_label.setText(f"🔵 {int(unit['status']['mp'])}")
+        # self.mp_label.setText(f"🔵 {int(unit['status']['mp'])}")
         self.attack_label.setText(f"ATK {int(unit['status']['attack'])}")
         self.defense_label.setText(f"DEF {int(unit['status']['defense'])}")
         self.attack_speed_label.setText(f"Speed {unit['status']['attackSpeed']:.2f}")
-        self.special_attack_label.setText(f"MPA {int(unit['status']['specialAttack'])}")
-        self.special_defense_label.setText(f"MPR {int(unit['status']['specialDefense'])}")
-        self.critical_rate_label.setText(f"🎯 {int(unit['status']['criticalRate'])}%")
-        critical_damage = int(unit['status']['criticalDamage'] * 100) - 100
-        self.critical_damage_label.setText(f"💥 +{critical_damage}%")
+        # self.special_attack_label.setText(f"MPA {int(unit['status']['specialAttack'])}")
+        # self.special_defense_label.setText(f"MPR {int(unit['status']['specialDefense'])}")
+        # self.critical_rate_label.setText(f"🎯 {int(unit['status']['criticalRate'])}%")
+        # critical_damage = int(unit['status']['criticalDamage'] * 100) - 100
+        # self.critical_damage_label.setText(f"💥 +{critical_damage}%")
         self.attack_range_label.setText(f"🏹 {int(unit['status']['attackRange'])}")
 
     def create_section(self, title, layout):
