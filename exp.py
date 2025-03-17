@@ -29,6 +29,21 @@ async def only_random():
     print("All tasks completed.")
     return
 
+async def user_test():
+    agents = []
+    tasks = []
+
+    for i in range(7):
+        print(f"random_agent{i+1} created")
+        client = RandomAgentClient(f"random_agent{i+1}", SERVER_URL)
+        agents.append(client)
+        tasks.append(asyncio.create_task(client.connect_to_server()))
+        await asyncio.sleep(0.1)
+
+    await asyncio.gather(*tasks)  # Wait for all agents to complete
+    print("All tasks completed.")
+    return
+
 async def single_llm():
     agents = []
     tasks = []
@@ -57,5 +72,6 @@ async def repeat(func, num):
 # Ensure proper event loop management
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(repeat(single_llm, 6))
+    # loop.run_until_complete(repeat(single_llm, 6))
+    loop.run_until_complete(user_test())
     print("End")
