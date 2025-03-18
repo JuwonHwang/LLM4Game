@@ -7,9 +7,10 @@ import copy
 from .util import TEAM
 
 class Unit(Active):
-    def __init__(self, name: str, cost: int, level: int, status: Status, synergy: list[str]):
+    def __init__(self, unit_id: str, name: str, cost: int, level: int, status: Status, synergy: list[str]):
         super().__init__()
         self.synergy = synergy
+        self.unit_id = unit_id
         self.cost = cost
         self.name = name
         self.level = level
@@ -32,18 +33,14 @@ class Unit(Active):
             "status": self.status.observe()
         }
 
-    def to_json(self):
-        return {
-            "name": self.name,
-            "cost": self.cost,
-            "price": self.get_sell_gold(),
+    def to_json(self, mode="simple"):
+        info = {
+            "id": self.unit_id,
             "level": self.level,
-            # "synergy": self.synergy,
-            # "item": [item.to_json() for item in self.items],
-            # "mana": self.mana,
-            "status": self.status.to_json(),
-            "team": self.team.value
         }
+        if mode == "battle":
+            info["team"] = self.team.value
+        return info
 
     def get_combat_mode(self):
         return json.loads(json.dumps(self.observe()))
@@ -102,6 +99,7 @@ class Unit(Active):
     def __deepcopy__(self, memo):
         # Create a new Unit instance with deep-copied initial values
         unit_copy = Unit(
+            copy.deepcopy(self.unit_id, memo),
             copy.deepcopy(self.name, memo),
             copy.deepcopy(self.cost, memo),
             copy.deepcopy(self.level, memo),

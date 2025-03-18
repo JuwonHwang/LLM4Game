@@ -220,7 +220,7 @@ class AutoBattlerGame(Base):
         battles = {}
         if self.matchup and self.arena:
             for (home_player, away_player), _arena in zip(self.matchup, self.arena):
-                v = [{'unit': u['unit'].to_json(), 'pos': u['pos']} for u in _arena]
+                v = [{'unit': u['unit'].to_json("battle"), 'pos': u['pos']} for u in _arena]
                 battles[home_player.player_id] = {
                     'team': TEAM.HOME.value,
                     'arena': v,

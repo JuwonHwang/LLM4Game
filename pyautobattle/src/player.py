@@ -184,39 +184,40 @@ class Player(Base):
             target.units[target_index] = source_unit
             source.units[source_index] = target_unit
             return {
-                MSG: [f"{self.name} moved {source_unit.name} ({source_type},{source_index}) <-> {target_unit.name if target_unit is not None else None} ({target_type},{target_index})"]
+                MSG: [f"{self.name} moved {source_unit.unit_id} ({source_type},{source_index}) <-> {target_unit.unit_id if target_unit is not None else None} ({target_type},{target_index})"]
             }
         except Exception as e:
             return {
                 MSG: [f"{self.name} move failed due to an unknown reason"]
             }
     
-    def upgrade(self, unit_name: str, unit_level: int):
-        bench_count = self.bench.count(unit_name, unit_level) 
-        field_count = self.field.count(unit_name, unit_level) 
+    def upgrade(self, unit: Unit):
+        bench_count = self.bench.count(unit) 
+        field_count = self.field.count(unit) 
         if bench_count + field_count < 3:
-            return None, None
+            return None
+        upgrade_unit = self.pool.get_unit(unit.name, unit.level+1)
         if bench_count == 0:
-            self.field.remove(unit_name, unit_level)
-            self.field.remove(unit_name, unit_level)
-            self.field.remove(unit_name, unit_level)
-            self.field.add(self.pool.get_unit(unit_name, unit_level+1))
+            self.field.remove(unit)
+            self.field.remove(unit)
+            self.field.remove(unit)
+            self.field.add(upgrade_unit)
         elif bench_count == 1:
-            self.bench.remove(unit_name, unit_level)
-            self.field.remove(unit_name, unit_level)
-            self.field.remove(unit_name, unit_level)
-            self.field.add(self.pool.get_unit(unit_name, unit_level+1))
+            self.bench.remove(unit)
+            self.field.remove(unit)
+            self.field.remove(unit)
+            self.field.add(upgrade_unit)
         elif bench_count == 2:
-            self.bench.remove(unit_name, unit_level)
-            self.bench.remove(unit_name, unit_level)
-            self.field.remove(unit_name, unit_level)
-            self.field.add(self.pool.get_unit(unit_name, unit_level+1))
+            self.bench.remove(unit)
+            self.bench.remove(unit)
+            self.field.remove(unit)
+            self.field.add(upgrade_unit)
         elif bench_count == 3:
-            self.bench.remove(unit_name, unit_level)
-            self.bench.remove(unit_name, unit_level)
-            self.bench.remove(unit_name, unit_level)
-            self.bench.add(self.pool.get_unit(unit_name, unit_level+1))
-        return unit_name, unit_level + 1
+            self.bench.remove(unit)
+            self.bench.remove(unit)
+            self.bench.remove(unit)
+            self.bench.add(upgrade_unit)
+        return upgrade_unit
     
     def reroll(self):
         if not self.is_alive():
@@ -323,40 +324,43 @@ class Player(Base):
             return {
                 MSG: [f"{self.name} tried to buy invalid index in shop"]
             }
-        unit_name = self.shop.units[shop_idx].name
-        purchased_unit = copy.deepcopy(self.pool.unit_dict[unit_name])
+        unit = self.shop.units[shop_idx]
+        purchased_unit = copy.deepcopy(self.pool.unit_dict[unit.name])
         if self.gold < purchased_unit.cost:
             return {
                 MSG: [f"{self.name} does not have enough gold"]
             }
         messages = []
         index = self.bench.add(purchased_unit)
-        messages.append(f"{self.name} try to buy {unit_name}.")
+        messages.append(f"{self.name} try to buy {purchased_unit.unit_id}.")
         if index == -1:
-            if self.bench.count(unit_name, 1) + self.field.count(unit_name, 1) >= 2:
-                if self.bench.count(unit_name, 1) >= 2:
-                    self.bench.remove(unit_name,1)
-                    self.bench.remove(unit_name,1)
-                    self.bench.add(self.pool.get_unit(unit_name, 2))
+            if self.bench.count(purchased_unit) + self.field.count(purchased_unit) >= 2:
+                if self.bench.count(purchased_unit) >= 2:
+                    self.bench.remove(purchased_unit)
+                    self.bench.remove(purchased_unit)
+                    self.bench.add(self.pool.get_unit(purchased_unit.name, 2))
                 elif self.bench.count == 1:
-                    self.bench.remove(unit_name,1)
-                    self.field.remove(unit_name,1)
-                    self.field.add(self.pool.get_unit(unit_name, 2))
+                    self.bench.remove(purchased_unit)
+                    self.field.remove(purchased_unit)
+                    self.field.add(self.pool.get_unit(purchased_unit.name, 2))
                 else:
-                    self.field.remove(unit_name,1)
-                    self.field.remove(unit_name,1)
-                    self.field.add(self.pool.get_unit(unit_name, 2))
-                messages.append(f"{self.name} upgrade {unit_name} to level 2")
+                    self.field.remove(purchased_unit)
+                    self.field.remove(purchased_unit)
+                    self.field.add(self.pool.get_unit(purchased_unit.name, 2))
+                messages.append(f"{self.name} upgrade {purchased_unit.unit_id} to level 2")
             else:
                 messages.append(f"{self.name} does not have enough bench room.")
                 return messages
         self.gold -= purchased_unit.cost
         self.shop.units[shop_idx] = None
-        for i in range(1,4):
-            upgrade_name, upgrade_level = self.upgrade(purchased_unit.name, unit_level=i)
-            if upgrade_name is not None:
-                messages.append(f"{self.name} upgrade ({upgrade_name}, {upgrade_level})")
-        messages.append(f"{self.name} successfully bought {unit_name}.")
+        messages.append(f"{self.name} successfully bought {purchased_unit.unit_id}.")
+        upgrade_unit = purchased_unit
+        for _ in range(1,4):
+            upgrade_unit = self.upgrade(upgrade_unit)
+            if upgrade_unit is not None:
+                messages.append(f"{self.name} upgrade ({upgrade_unit.unit_id}, {upgrade_unit.level})")
+            else:
+                break
         return {
             MSG: messages
         }
@@ -381,7 +385,7 @@ class Player(Base):
             self.gold += earn_gold
             self.pool.add_unit(_unit)
             return {
-                MSG: [f"{self.name} sold level {_unit.level} - {_unit.name}, earned {earn_gold} gold."]
+                MSG: [f"{self.name} sold level {_unit.level} - {_unit.unit_id}, earned {earn_gold} gold."]
             }
     
     def add_gold(self, amount: int):

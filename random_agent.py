@@ -4,6 +4,7 @@ import json
 import os
 import random  # 랜덤 액션을 위해 추가
 import sys
+from util.unit_tools import get_cost, get_price
 
 # Function to load URL from a text file
 def load_server_url(filename=".server"):
@@ -25,6 +26,7 @@ class RandomAgentClient:
         self.update = True
         self.connected = False
         self.end = False
+        self.memory = self.get_memory()
         self.messages = []
         self.state = {"user": {}, "home": {}, "lobby": {}, "game": {}}
         self.register_events()
@@ -100,6 +102,9 @@ class RandomAgentClient:
         else:
             await self.send_command('register_game')
         pass
+    
+    def get_memory(self):
+        return {}
 
     def get_valid_actions(self, money, data):
         actions = ['buy_exp', 'buy_unit', 'reroll', 'sell_unit', 'move_unit', 'none']
@@ -112,7 +117,7 @@ class RandomAgentClient:
         bench_num_slots = data['player']['bench']['num_slots']
         field_num_slots = data['player']['field']['num_slots']
         
-        valid_shop_index = [i for i in range(shop_num_slots) if shop_units[i] is not None and money >= shop_units[i]['cost']]
+        valid_shop_index = [i for i in range(shop_num_slots) if shop_units[i] is not None and money >= get_price(shop_units[i])]
         
         valid_bench_positions = []
         for bench_index, bench_unit in enumerate(bench_units):

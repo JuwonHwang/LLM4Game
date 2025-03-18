@@ -28,6 +28,7 @@ class Pool:
         with open(file_path, mode='r', newline='', encoding='utf-8') as file:
             csv_reader = csv.DictReader(file)
             for row in csv_reader:
+                unit_id = row["unit_id"]
                 name = row["name"]
                 cost = int(row["cost"])
                 unit_status = Status(
@@ -42,7 +43,7 @@ class Pool:
                     float(row["criticalDamage"]),
                     int(row["attackRange"]),
                 )
-                _unit = Unit(name, cost, 1, unit_status, [])
+                _unit = Unit(unit_id ,name, cost, 1, unit_status, [])
                 self.unit_dict[name] = _unit
                 count = self.unit_counts[cost]
                 self.available_units[cost][name] = count
