@@ -178,3 +178,4 @@ cython_debug/
 /plot
 result.py
 dummy
+dummy.py
