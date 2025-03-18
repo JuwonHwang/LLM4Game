@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import QLineEdit, QGridLayout, QHBoxLayout, QPushButton, QS
 from PyQt6.QtCore import QSize
 from .drag_widget import DraggableLabel
 
-from ..game_ui.util import unit_to_text
+from ..game_ui.util import unit_to_text, get_color
 from ..baseWidget import BaseWidget
 from .battle_unit_widget import BattleUnitWidget
 import json
@@ -59,12 +59,7 @@ class BattleWidget(BaseWidget):
         for row in range(8):
             for col in range(7):
                 unit = units[row][col]
-                if unit is not None:
-                    color = self.color_map[unit['cost']]
-                    hover_color = self.hover_color_map[unit['cost']]
-                else:
-                    color = "#eeeeee"
-                    hover_color = "#eeeeee"
+                color, hover_color = get_color(unit)
                 button = BattleUnitWidget(unit, color, hover_color)
                 button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
                 self.unit_layout.addWidget(button, row, col)

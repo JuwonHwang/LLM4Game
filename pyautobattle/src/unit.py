@@ -40,6 +40,7 @@ class Unit(Active):
         }
         if mode == "battle":
             info["team"] = self.team.value
+            info["status"] = self.status.to_json()
         return info
 
     def get_combat_mode(self):

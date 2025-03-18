@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QApplication, QWidget, QHBoxLayout, QPushButton, QVBoxLayout, QLabel
-from ..game_ui.util import unit_to_shop_text
+from ..game_ui.util import unit_to_shop_text, get_color
 from ..baseWidget import BaseWidget
 from .drag_widget import DraggableLabel
 import json
@@ -52,13 +52,10 @@ class ShopWidget(BaseWidget):
         unit_list = data['units']
         for index, button in enumerate(self.buttons):
             unit = unit_list[index]
+            color, hover_color = get_color(unit)
             if unit is not None:
-                color = self.color_map[unit['cost']]
-                hover_color = self.hover_color_map[unit['cost']]
                 button.dragable = True
             else:
-                color = "#eeeeee"
-                hover_color = "#eeeeee"
                 button.dragable = False
             button.setStyleSheet(f"""
                 QPushButton {{
