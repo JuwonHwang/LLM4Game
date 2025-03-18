@@ -6,11 +6,11 @@ with open("./memory/unit.csv", mode='r', newline='', encoding='utf-8') as file:
     for row in csv_reader:
         unit_info[row["unit_id"]] = row
         
-def get_cost(unit_id):
-    return int(unit_info[unit_id]["cost"])
+def get_cost(unit):
+    return int(unit_info[unit['id']]["cost"])
 
 def get_price(unit):
-    cost = get_cost(unit["id"])
+    cost = get_cost(unit)
     level = int(unit["level"])
     if cost == 1:
         return int(cost * (3 ** (level - 1)))
