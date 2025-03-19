@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QSizePolicy
-from ..game_ui.util import unit_to_text
+from ..game_ui.util import unit_to_text, get_info, get_price
 from ..baseWidget import BaseWidget
 from PyQt6.QtCore import Qt
 
@@ -83,21 +83,12 @@ class UnitWidget(BaseWidget):
         self.update_state(None)
 
     def update_state(self, unit):
+        unit_info = get_info(unit)
         if unit is None:
             unit = {
-                'name': "Unknown",
-                'cost': 0,
-                'price': 0,
-                'level': 1,
-                'synergy': [],
-                'item': [],
-                'status': {
-                    "max_hp": 0, "mp": 0, "attack": 0, "defense": 0, "attackSpeed": 0,
-                    "specialAttack": 0, "specialDefense": 0, "criticalRate": 0,
-                    "criticalDamage": 1, "attackRange": 0,
-                }
+                "cost": 1,
+                "level": 1,
             }
-        """Update QLabel with unit information"""
         name = unit_to_text(unit)
         self.name_label.setText(f"{name}")
         self.name_label.setStyleSheet("""
@@ -115,7 +106,7 @@ class UnitWidget(BaseWidget):
         """)
         self.name_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
-        self.gold_label.setText(f"💰 {unit['price']}")
+        self.gold_label.setText(f"💰 {get_price(unit)}")
         self.gold_label.setStyleSheet("""
             QLabel {
                 background-color:rgb(89, 103, 124);
@@ -130,22 +121,11 @@ class UnitWidget(BaseWidget):
             }
         """)
         self.gold_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        # self.level_label.setText(f"⭐ {unit['level']}")
-
-        self.synergy_label.setText(f"Synergy {', '.join(unit['synergy']) if unit['synergy'] else 'None'}")
-        self.item_label.setText(f"Item {', '.join(unit['item']) if unit['item'] else 'None'}")
-
-        self.hp_label.setText(f"❤️ {int(unit['status']['max_hp'])}")
-        self.mp_label.setText(f"🔵 {int(unit['status']['mp'])}")
-        self.attack_label.setText(f"ATK {int(unit['status']['attack'])}")
-        self.defense_label.setText(f"DEF {int(unit['status']['defense'])}")
-        self.attack_speed_label.setText(f"Speed {unit['status']['attackSpeed']:.2f}")
-        self.special_attack_label.setText(f"MPA {int(unit['status']['specialAttack'])}")
-        self.special_defense_label.setText(f"MPR {int(unit['status']['specialDefense'])}")
-        self.critical_rate_label.setText(f"🎯 {int(unit['status']['criticalRate'])}%")
-        critical_damage = int(unit['status']['criticalDamage'] * 100) - 100
-        self.critical_damage_label.setText(f"💥 +{critical_damage}%")
-        self.attack_range_label.setText(f"🏹 {int(unit['status']['attackRange'])}")
+        self.hp_label.setText(f"❤️ {int(unit_info['hp'])}")
+        self.attack_label.setText(f"ATK {int(unit_info['attack'])}")
+        self.defense_label.setText(f"DEF {int(unit_info['defense'])}")
+        self.attack_speed_label.setText(f"Speed {float(unit_info['attackSpeed']):.2f}")
+        self.attack_range_label.setText(f"🏹 {int(unit_info['attackRange'])}")
 
     def create_section(self, title, layout):
         frame = QFrame()

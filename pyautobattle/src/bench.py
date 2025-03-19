@@ -52,18 +52,18 @@ class Bench(Base):
     def is_full(self):
         return self.find_empty() == -1
     
-    def count(self, unit_name, unit_level):
+    def count(self, _unit: Unit):
         n = 0
         for unit in self.units:
             if unit is not None:
-                if unit.name == unit_name and unit.level == unit_level:
+                if unit.unit_id == _unit.unit_id and unit.level == _unit.level:
                     n += 1
         return n
     
-    def remove(self, unit_name, unit_level):
+    def remove(self, _unit: Unit):
         for i, unit in enumerate(self.units):
             if unit is not None:
-                if unit.name == unit_name and unit.level == unit_level:
+                if unit.unit_id == _unit.unit_id and unit.level == _unit.level:
                     self.units[i] = None
                     return unit
     

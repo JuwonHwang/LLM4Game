@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QApplication, QStackedWidget, QGridLayout, QWidget, QHBoxLayout, QPushButton, QVBoxLayout, QLabel
 from PyQt6.QtCore import Qt
-from ..game_ui.util import unit_to_text
+from ..game_ui.util import unit_to_text, get_color
 from ..baseWidget import BaseWidget
 from .battle_widget import BattleWidget
 from .drag_widget import DraggableLabel
@@ -111,12 +111,7 @@ class FieldWidget(BaseWidget):
             button.clicked.connect(lambda _, i=index: self.parent.view_unit('field', i))
             self.unit_layout.addWidget(button, 8 - index // 7, index % 7)
             self.unit_buttons.append(button) 
-            if unit is not None:
-                color = self.color_map[unit['cost']]
-                hover_color = self.hover_color_map[unit['cost']]
-            else:
-                color = "#eeeeee"
-                hover_color = "#eeeeee"
+            color, hover_color = get_color(unit)
             button.setStyleSheet(f"""
                 QPushButton {{
                     background-color: {color};

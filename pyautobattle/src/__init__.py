@@ -5,6 +5,8 @@ from .unit import Unit
 from .game import AutoBattlerGame
 from .player import Player
 from .status import Status
+from .util import get_info, get_name, get_cost, get_price
+
 
 __all__ = [
     "Base", 
@@ -13,5 +15,9 @@ __all__ = [
     "Item", 
     "AutoBattlerGame",
     "Player",
-    "Status"
+    "Status",
+    "get_info", 
+    "get_name", 
+    "get_cost", 
+    "get_price"
     ]

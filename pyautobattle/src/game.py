@@ -6,7 +6,8 @@ import time
 from enum import Enum
 import random
 import copy
-from .util import TEAM, astar
+from .astar import search
+from .util import TEAM
 
 MSG = 'message'
 ROW = 8
@@ -220,7 +221,7 @@ class AutoBattlerGame(Base):
         battles = {}
         if self.matchup and self.arena:
             for (home_player, away_player), _arena in zip(self.matchup, self.arena):
-                v = [{'unit': u['unit'].to_json(), 'pos': u['pos']} for u in _arena]
+                v = [{'unit': u['unit'].to_json("battle"), 'pos': u['pos']} for u in _arena]
                 battles[home_player.player_id] = {
                     'team': TEAM.HOME.value,
                     'arena': v,
@@ -268,7 +269,7 @@ class AutoBattlerGame(Base):
             else:
                 if unit_i.alive() and unit_i.move():
                     obstacles = [unit_info['pos'] for unit_info in _arena]
-                    path, direction = astar(pos_i, target_pos, obstacles)
+                    path, direction = search(pos_i, target_pos, obstacles)
                     if direction is not None:
                         pos_i[0] += direction[0][0]
                         pos_i[1] += direction[0][1]

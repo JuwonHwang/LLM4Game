@@ -47,14 +47,14 @@ class Status(Base):
             "max_hp": self.max_hp,
             "hp": self.hp,
             # "mp": self.mp,
-            "attack": self.attack,
-            "defense": self.defense,
-            "attackSpeed": self.attackSpeed,
+            # "attack": self.attack,
+            # "defense": self.defense,
+            # "attackSpeed": self.attackSpeed,
             # "specialAttack": self.specialAttack,
             # "specialDefense": self.specialDefense,
             # "criticalRate": self.criticalRate,
             # "criticalDamage": self.criticalDamage,
-            "attackRange": self.attackRange,
+            # "attackRange": self.attackRange,
         }
     
     def __add__(self, other):
