@@ -26,6 +26,11 @@ class Player(Base):
         self.req_exp_list = [0,2,2,6,10,20,36,48,76,84, float("inf")]
         self.streak = 0
         self.active = False
+        self.log = []
+        self.combat_result_list = []
+        self.interest_list = []
+        self.streak_gold_list = []
+        self.turn_gold_list = []
         
     def is_alive(self):
         return self.hp > 0
@@ -74,6 +79,7 @@ class Player(Base):
         self.exp -= required_exp
         self.field.level_up()
         self.level += 1
+        self.log.append({'type': 'level_up', 'args': self.level})
         return f"{self.name} level up to {self.level}"
 
     def purchase_exp(self):
@@ -93,6 +99,7 @@ class Player(Base):
             self.gold -= 4
             self.exp += 4
             messages = [f"{self.name} buy EXP"]
+            self.log.append({'type': 'buy_exp', 'args': self.exp})
             while self.level < 10 and self.exp >= self.get_required_exp():
                 messages.append(self.player_level_up())
             return {
@@ -111,6 +118,7 @@ class Player(Base):
         else:
             self.exp += exp_amount
             messages = [f"{self.name} get {exp_amount} EXP"]
+            self.log.append({'type': 'get_exp', 'args': self.exp})
             while self.level < 10 and self.exp >= self.get_required_exp():
                 messages.append(self.player_level_up())
             return {
@@ -183,6 +191,7 @@ class Player(Base):
                 }
             target.units[target_index] = source_unit
             source.units[source_index] = target_unit
+            self.log.append({'type': 'move_unit'})
             return {
                 MSG: [f"{self.name} moved {source_unit.unit_id} ({source_type},{source_index}) <-> {target_unit.unit_id if target_unit is not None else None} ({target_type},{target_index})"]
             }
@@ -231,6 +240,7 @@ class Player(Base):
         else:
             self.gold -= 2
             self.refresh_shop()
+            self.log.append({'type': 'reroll'})
             return {
                 MSG: [f"{self.name} reroll"]
             }
@@ -272,9 +282,13 @@ class Player(Base):
             streak_gold += 1
         if abs(self.streak) >= 6:
             streak_gold += 1
+        self.interest_list.append(interest)
+        self.streak_gold_list.append(streak_gold)
+        self.turn_gold_list.append(turn_gold)
         self.gold += interest + streak_gold + turn_gold
     
     def win(self):
+        self.combat_result_list.append(1)
         self.gold += 1
         if self.streak < 0:
             self.streak = 1
@@ -282,12 +296,14 @@ class Player(Base):
             self.streak += 1
     
     def lose(self):
+        self.combat_result_list.append(-1)
         if self.streak > 0:
             self.streak = -1
         else:
             self.streak -= 1
     
     def draw(self):
+        self.combat_result_list.append(0)
         self.streak = 0
     
     def get_turn_exp(self):
@@ -353,11 +369,13 @@ class Player(Base):
                 return messages
         self.gold -= purchased_unit.cost
         self.shop.units[shop_idx] = None
+        self.log.append({'type': 'buy_unit'})
         messages.append(f"{self.name} successfully bought {purchased_unit.unit_id}.")
         upgrade_unit = purchased_unit
         for _ in range(1,4):
             upgrade_unit = self.upgrade(upgrade_unit)
             if upgrade_unit is not None:
+                self.log.append({'type': 'upgrade_unit', 'args': upgrade_unit.unit_id})
                 messages.append(f"{self.name} upgrade ({upgrade_unit.unit_id}, {upgrade_unit.level})")
             else:
                 break
@@ -384,6 +402,7 @@ class Player(Base):
             earn_gold = _unit.get_sell_gold()
             self.gold += earn_gold
             self.pool.add_unit(_unit)
+            self.log.append({'type': 'sell_unit', 'args': _unit.unit_id})
             return {
                 MSG: [f"{self.name} sold level {_unit.level} - {_unit.unit_id}, earned {earn_gold} gold."]
             }
@@ -396,3 +415,12 @@ class Player(Base):
         
     def play_randomly(self):
         pass
+    
+    def get_history(self):
+        return {
+            'log': self.log,
+            'combat': self.combat_result_list,
+            'interest': self.interest_list,
+            'streak_gold': self.streak_gold_list,
+            'turn_gold': self.turn_gold_list,
+        }

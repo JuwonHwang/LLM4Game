@@ -79,6 +79,7 @@ class AutoBattlerGame(Base):
 
     def next_state(self):
         result = None
+        # self.replay.append(self.to_json())
         if self.state == GameState.READY: # READY -> BATTLE
             self.setActive(False)
             self.state = GameState.BATTLE
@@ -142,7 +143,6 @@ class AutoBattlerGame(Base):
     
     def step(self, frame: int):
         result = None
-        self.replay.append(self.to_json())
         self.check_end()
         self.timer += 1 / frame
         
@@ -330,4 +330,8 @@ class AutoBattlerGame(Base):
         }
                     
     def get_replay(self):
-        return self.replay
+        # return self.replay
+        history = {}
+        for player in self.players:
+            history[player.player_id] = player.get_history()
+        return history
