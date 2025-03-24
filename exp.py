@@ -53,10 +53,37 @@ async def single_llm():
         client = RandomAgentClient(f"random_agent{i+1}", SERVER_URL)
         agents.append(client)
         tasks.append(asyncio.create_task(client.connect_to_server()))
-        await asyncio.sleep(2)
+        await asyncio.sleep(0.4)
     client = LLMAgentClient(f"llm_agent1", SERVER_URL)
     agents.append(client)
     tasks.append(asyncio.create_task(client.connect_to_server()))
+    
+    await asyncio.gather(*tasks)  # Wait for all agents to complete
+    print("All tasks completed.")
+    return
+
+async def cot_vs_direct():
+    agents = []
+    tasks = []
+
+    for i in range(6):
+        print(f"random_agent{i+1} created")
+        client = RandomAgentClient(f"random_agent{i+1}", SERVER_URL)
+        agents.append(client)
+        tasks.append(asyncio.create_task(client.connect_to_server()))
+        await asyncio.sleep(0.4)
+        
+    # Direct
+    client = LLMAgentClient(f"llm_agent_direct", SERVER_URL, "direct")
+    agents.append(client)
+    tasks.append(asyncio.create_task(client.connect_to_server()))
+    await asyncio.sleep(0.4)
+    
+    # CoT
+    client = LLMAgentClient(f"llm_agent_cot", SERVER_URL, "cot")
+    agents.append(client)
+    tasks.append(asyncio.create_task(client.connect_to_server()))
+    await asyncio.sleep(0.4)
     
     await asyncio.gather(*tasks)  # Wait for all agents to complete
     print("All tasks completed.")
@@ -72,6 +99,6 @@ async def repeat(func, num):
 # Ensure proper event loop management
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
-    # loop.run_until_complete(repeat(single_llm, 6))
-    loop.run_until_complete(user_test())
+    loop.run_until_complete(repeat(cot_vs_direct, 5))
+    # loop.run_until_complete(cot_vs_direct())
     print("End")
