@@ -173,6 +173,7 @@ class GameServer:
             if result:
                 await self.log(game_id, result)
                 await self.sio.emit('response', f'{result}', to=self.rooms[game_id])
+                await self.sio.emit('round_result', ". ".join(result["message"]), to=self.rooms[game_id])
             await self.send_game_state(game_id)
             await asyncio.sleep(1 / frame)  # 60Frame초 간격으로 턴 진행
         
