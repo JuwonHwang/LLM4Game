@@ -287,13 +287,13 @@ class AutoBattlerGame(Base):
             count_home = team_list.count(TEAM.HOME)
             count_away = team_list.count(TEAM.AWAY)
             if count_home and count_away:
-                return BattleState.DRAW, BattleState.DRAW, self.round, self.round
+                return BattleState.DRAW, BattleState.DRAW, 3, 3
             elif count_home:
-                return BattleState.WIN, BattleState.LOSE, 0, self.round + count_home
+                return BattleState.WIN, BattleState.LOSE, 0, 3 + count_home
             elif count_away:
-                return BattleState.LOSE, BattleState.WIN, self.round + count_away, 0
+                return BattleState.LOSE, BattleState.WIN, 3 + count_away, 0
             else:
-                return BattleState.DRAW, BattleState.DRAW, self.round, self.round
+                return BattleState.DRAW, BattleState.DRAW, 3, 3
                 
         damage_dict = {}
         for i, _arena in enumerate(self.arena):
