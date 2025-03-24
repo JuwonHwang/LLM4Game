@@ -6,10 +6,22 @@ class TEAM(Enum):
     AWAY = "away"
 
 unit_info = {}
-with open("./memory/unit.csv", mode='r', newline='', encoding='utf-8') as file:
+with open("./pyautobattle/data/unit.csv", mode='r', newline='', encoding='utf-8') as file:
     csv_reader = csv.DictReader(file)
     for row in csv_reader:
         unit_info[row["unit_id"]] = row
+        
+def get_unit_dict():
+    unit_dict = {}
+    for k, v in unit_info.items():
+        unit_dict[k] = {
+            "cost": v["cost"],
+            "hp": v["hp"],
+            "attack": v["attack"],
+            "defense": v["defense"],
+            "attackRange": v["attackRange"]
+        }
+    return unit_dict
 
 def get_info(unit):
     if unit is not None:
