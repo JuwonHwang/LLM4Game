@@ -179,3 +179,5 @@ cython_debug/
 result.py
 dummy
 dummy.py
+/image
+/llm_output
