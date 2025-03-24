@@ -3,9 +3,11 @@ import socketio
 import json
 import openai
 import sys
-from config.system_prompt import DIRECT_SYSTEM_PROMPT
+from config.system_prompt import GAME_PROMPT, DIRECT_PROMPT, INTERNAL_COT, EXTERNAL_COT, HEAVY_COT_PROMPT
 from config.tools import tool_rerole, tool_buy_exp, tool_buy_unit, tool_move_unit, tool_sell_unit, tool_none
 from random_agent import RandomAgentClient
+import os
+from openai import RateLimitError
 
 # Load server URL from a configuration file
 def load_server_url(filename=".server"):
@@ -16,9 +18,9 @@ def load_server_url(filename=".server"):
         print("⚠ .server file not found. Using default URL.")
         return "http://localhost:5000"
 
-SERVER_URL = load_server_url()
 
-SYSTEM_PROMPT = DIRECT_SYSTEM_PROMPT
+MODEL = "gpt-4o"
+SERVER_URL = load_server_url()
 
 # Load OpenAI API key
 def load_api():
@@ -27,12 +29,30 @@ def load_api():
         key = f.read().strip('\n')
     assert key is not None
     openai.api_key = key
+    return key
 
-load_api()
+key = load_api()
 
 class LLMAgentClient(RandomAgentClient):
-    def __init__(self, user_id, server_url):
+    def __init__(self, user_id, server_url, prompt_type='direct'):
         super().__init__(user_id, server_url)
+        
+        if prompt_type == "direct":
+            self.system_prompt = GAME_PROMPT + DIRECT_PROMPT
+        elif prompt_type == "internal_cot":
+            self.system_prompt = GAME_PROMPT + INTERNAL_COT
+        elif prompt_type == "external_cot":
+            self.system_prompt = GAME_PROMPT + EXTERNAL_COT
+        else:
+            self.system_prompt = GAME_PROMPT + DIRECT_PROMPT
+
+        self.client = openai.AsyncOpenAI(api_key=key)
+        self.answers = []
+
+    def save_answers(self, game_id):
+        os.makedirs(os.path.join("llm_output", game_id), exist_ok=True)
+        with open(os.path.join("llm_output", f"{game_id}/{self.user_id}.json"), 'w', encoding='utf-8') as file:
+            json.dump(self.answers, file, indent=4, ensure_ascii=False)
 
     async def get_action(self, actions, extra, game_state):
         """Uses LLM function calling to determine the best action based on the game state."""
@@ -50,16 +70,25 @@ class LLMAgentClient(RandomAgentClient):
             tools.append(tool_move_unit)
 
         # Query OpenAI GPT model with function calling
-        response = openai.chat.completions.create(
-            model="gpt-4o-mini",
-            store=False,
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": json.dumps(game_state)},
-            ],
-            tools=tools,
-        )
-        # print(response.choices[0].message)
+        while True:
+            try:
+                response = await self.client.chat.completions.create(
+                    model=MODEL,
+                    store=False,
+                    messages=[
+                        {"role": "system", "content": self.system_prompt},
+                        {"role": "user", "content": "The latest round result: " + self.round_result_list[-1]},
+                        {"role": "user", "content": "This is the current game state: " + json.dumps(game_state)},
+                        {"role": "user", "content": "Unit Specs: " + json.dumps(self.unit_dict)},
+                    ],
+                    tools=tools,
+                    max_tokens=400,
+                )
+                break
+            except RateLimitError as e:
+                print(f"{self.user_id}: Rate limit hit! Retrying in 3 seconds...")
+                await asyncio.sleep(3)
+        self.answers.append(response.choices[0].message.content)
         action_list = []
         try:
             if not response.choices[0].message.tool_calls:
@@ -69,6 +98,7 @@ class LLMAgentClient(RandomAgentClient):
                 if action_data:
                     action = action_data.name
                     action_args = json.loads(action_data.arguments)
+                    self.answers.append([action, action_args])
                     if not action_args:
                         action_args = None
                     if action == "buy_unit":
@@ -85,10 +115,12 @@ class LLMAgentClient(RandomAgentClient):
     async def step(self):
         await self.send_command('login', self.user_id)
         count = 0
+        game_id = "unknown"
         while not self.end:
             if self.state['user'] and self.state['user']['game_id'] is None:
                 await self.find_game()
             elif self.state['user'] and self.state['user']['game_id'] is not None:
+                game_id = self.state['user']['game_id']
                 break
             await asyncio.sleep(0.1)
         while not self.end:
@@ -99,9 +131,10 @@ class LLMAgentClient(RandomAgentClient):
                     for action, params in action_list:
                         if action != "none":
                             await self.send_command(action, params)
-                            await asyncio.sleep(1)
+                            await asyncio.sleep(0.1)
                     count += 1
-            await asyncio.sleep(1)  # 1초마다 실행
+            self.save_answers(game_id=game_id)
+            await asyncio.sleep(2)
         await self.send_command("quit_game", None)
         await self.close()
         return

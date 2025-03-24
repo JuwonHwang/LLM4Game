@@ -4,7 +4,7 @@ import json
 import os
 import random  # 랜덤 액션을 위해 추가
 import sys
-from util.unit_tools import get_cost, get_price
+from pyautobattle.src.util import get_cost, get_price, get_unit_dict
 
 # Function to load URL from a text file
 def load_server_url(filename=".server"):
@@ -28,6 +28,8 @@ class RandomAgentClient:
         self.end = False
         self.memory = self.get_memory()
         self.messages = []
+        self.round_result_list = ['']
+        self.unit_dict = get_unit_dict()
         self.state = {"user": {}, "home": {}, "lobby": {}, "game": {}}
         self.register_events()
 
@@ -49,6 +51,10 @@ class RandomAgentClient:
                 self.messages.append(json.loads(data))
             except Exception as e:
                 pass 
+        
+        @self.sio.event
+        async def round_result(data):
+            self.round_result_list.append(data)
             
         @self.sio.event
         async def game_end():
