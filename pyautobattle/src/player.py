@@ -269,19 +269,11 @@ class Player(Base):
         return appearance_rate
     
     def get_turn_gold(self, turn):
-        turn_gold = 1
-        if turn < 5:
-            turn_gold += 4
-        else:
-            turn_gold += turn // 5
+        turn_gold = 10
         interest = min(self.gold % 10, 5)
         streak_gold = 0
         if abs(self.streak) >= 2: 
-            streak_gold += 1
-        if abs(self.streak) >= 4:
-            streak_gold += 1
-        if abs(self.streak) >= 6:
-            streak_gold += 1
+            streak_gold += min(abs(self.streak), 6)
         self.interest_list.append(interest)
         self.streak_gold_list.append(streak_gold)
         self.turn_gold_list.append(turn_gold)
@@ -369,7 +361,7 @@ class Player(Base):
                 return messages
         self.gold -= purchased_unit.cost
         self.shop.units[shop_idx] = None
-        self.log.append({'type': 'buy_unit'})
+        self.log.append({'type': 'buy_unit', 'args': purchased_unit.unit_id})
         messages.append(f"{self.name} successfully bought {purchased_unit.unit_id}.")
         upgrade_unit = purchased_unit
         for _ in range(1,4):
