@@ -29,16 +29,13 @@ class ToolAugmentedLLMAgentClient(LLMAgentClient):
             sparse_container = {}
             for i, unit in enumerate(container):
                 if unit:
-                    if dim == 1:
-                        sparse_container[f"{i}"] = unit
-                    if dim == 2:
-                        sparse_container[f"({i//7},{i%7})"] = unit
+                    sparse_container[f"{i}"] = unit
             return sparse_container
         
         compact_game_state["player"]['bench']['units'] = to_sparse(compact_game_state["player"]['bench']['units'])
         compact_game_state["player"]['shop']['units'] = to_sparse(compact_game_state["player"]['shop']['units'])
-        compact_game_state["player"]['field']['shape'] = "(4, 7)"
-        compact_game_state["player"]['field']['units'] = to_sparse(compact_game_state["player"]['field']['units'], dim=2)
+        compact_game_state['player']['field']['size'] = '28'
+        compact_game_state["player"]['field']['units'] = to_sparse(compact_game_state["player"]['field']['units'])
         
         game_state_messages ={
             "role": "user",
@@ -47,6 +44,11 @@ class ToolAugmentedLLMAgentClient(LLMAgentClient):
         self.messages.append(game_state_messages)
         self.messages.append({"role": "user", "content": self.user_prompt})
 
+        if len(self.messages) > 10:
+            input_messages = self.messages[-10:]
+        else:
+            input_messages = self.messages
+        
         # print(self.messages)
         # Query OpenAI GPT model with function calling
         while True:
@@ -56,7 +58,7 @@ class ToolAugmentedLLMAgentClient(LLMAgentClient):
                     store=False,
                     messages=[
                         {"role": "system", "content": self.system_prompt},
-                    ] + self.messages,
+                    ] + input_messages,
                     tools=actions + self.tools,
                 )
                 break
