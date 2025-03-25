@@ -1,5 +1,6 @@
 from random_agent import RandomAgentClient
 from llm_agent import LLMAgentClient
+from tool_augmented_agent import ToolAugmentedLLMAgentClient
 
 import asyncio
 
@@ -62,6 +63,24 @@ async def single_llm():
     print("All tasks completed.")
     return
 
+async def single_planner():
+    agents = []
+    tasks = []
+
+    for i in range(7):
+        print(f"random_agent{i+1} created")
+        client = RandomAgentClient(f"random_agent{i+1}", SERVER_URL)
+        agents.append(client)
+        tasks.append(asyncio.create_task(client.connect_to_server()))
+        await asyncio.sleep(0.4)
+    client = ToolAugmentedLLMAgentClient(f"tool_augment_agent1", SERVER_URL)
+    agents.append(client)
+    tasks.append(asyncio.create_task(client.connect_to_server()))
+    
+    await asyncio.gather(*tasks)  # Wait for all agents to complete
+    print("All tasks completed.")
+    return
+
 async def cot_vs_direct():
     agents = []
     tasks = []
@@ -80,7 +99,7 @@ async def cot_vs_direct():
     await asyncio.sleep(0.4)
     
     # CoT
-    client = LLMAgentClient(f"llm_agent_cot", SERVER_URL, "cot")
+    client = LLMAgentClient(f"llm_agent_cot", SERVER_URL, "internal_cot")
     agents.append(client)
     tasks.append(asyncio.create_task(client.connect_to_server()))
     await asyncio.sleep(0.4)
@@ -99,6 +118,6 @@ async def repeat(func, num):
 # Ensure proper event loop management
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(repeat(cot_vs_direct, 5))
-    # loop.run_until_complete(cot_vs_direct())
+    # loop.run_until_complete(repeat(cot_vs_direct, 5))
+    loop.run_until_complete(single_planner())
     print("End")

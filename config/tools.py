@@ -1,8 +1,28 @@
-tool_rerole = {
+tool_unit_lookup = {
     "type": "function",
     "function": {
-        "name": "reroll",
-        "description": "Refreshes the available units in the shop.",
+        "name": "view_unit_status",
+        "description": "View unit status with given unit id.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "unit_id": {
+                    "type": "string",
+                    "description": "The unit id to view status.",
+                }
+            },
+            "required": ["unit_id"],
+            "additionalProperties": False
+        },
+        "strict": True
+    }
+}
+
+tool_expected_gold = {
+    "type": "function",
+    "function": {
+        "name": "calculate_next_round_expected_gold",
+        "description": "Calculate the expected gold based on the next battle result based on the gold you currently have.",
         "parameters": {
             "type": "object",
             "properties": {},
@@ -12,114 +32,22 @@ tool_rerole = {
     }
 }
 
-
-tool_buy_exp = {
+tool_field_strength = {
     "type": "function",
     "function": {
-        "name": "buy_exp",
-        "description": "Purchases a specified amount of experience points (EXP) to level up. Each purchase grants 4 EXP points. The maximum level attainable is 10.",
-        "parameters": {
-            "type": "object",
-            "properties": {},
-            "additionalProperties": False
-        },
-        "strict": True
-    }
-}
-
-tool_buy_unit = {
-    "type": "function",
-    "function": {
-        "name": "buy_unit",
-        "description": "Purchases a specified amount of experience points (EXP) to level up. Each purchase grants 4 EXP points. The maximum level attainable is 10.",
+        "name": "calculate_field_strength_by_player_id",
+        "description": "Calculates the strength of a player's field based on the cost of their units.",
         "parameters": {
             "type": "object",
             "properties": {
-                "shop_index": {
-                    "type": "integer",
-                    "description": "The shop unit index to purchase.",
-                }
-            },
-            "required": ["shop_index"],
-            "additionalProperties": False
-        },
-        "strict": True
-    }
-}
-
-tool_sell_unit = {
-    "type": "function",
-    "function": {
-        "name": "sell_unit",
-        "description": "Sell a unit from the specified source (bench or field).",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "source_type": {
+                "player_id": {
                     "type": "string",
-                    "description": "The source containing the unit to sell. Options are 'bench' or 'field'.",
-                    "enum": ["bench", "field"],
-                    "default": "bench"
+                    "description": "The player_id whose strength level is to be calculated",
                 },
-                "source_index": {
-                    "type": "integer",
-                    "description": "The index of the unit to sell within the specified source.",
-                }
             },
-            "required": ["source_type", "source_index"],
+            "required": ["player_id"],
             "additionalProperties": False
         },
         "strict": True
     }
 }
-
-tool_move_unit = {
-    "type": "function",
-    "function": {
-        "name": "move_unit",
-        "description": "Move a unit from a specified source (bench or field) to a target location (bench or field).",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "source_type": {
-                    "type": "string",
-                    "description": "The source containing the unit to move. Options are 'bench' or 'field'.",
-                    "enum": ["bench", "field"],
-                    "default": "bench"
-                },
-                "target_type": {
-                    "type": "string",
-                    "description": "The destination for the unit. Options are 'bench' or 'field'.",
-                    "enum": ["bench", "field"],
-                    "default": "field"
-                },
-                "source_index": {
-                    "type": "integer",
-                    "description": "The index of the unit in the source to move.",
-                },
-                "target_index": {
-                    "type": "integer",
-                    "description": "The index in the target where the unit should be placed.",
-                }
-            },
-            "required": ["source_type", "target_type", "source_index", "target_index"],
-            "additionalProperties": False
-        },
-        "strict": True
-    }
-}
-
-tool_none = {
-    "type": "function",
-    "function": {
-        "name": "none",
-        "description": "A no-operation function that performs no action.",
-        "parameters": {
-            "type": "object",
-            "properties": {},
-            "additionalProperties": False
-        },
-        "strict": True
-    }
-}
-

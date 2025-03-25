@@ -9,7 +9,7 @@ The game mechanisms are described here:
 
 2. Player Mechanics:
 - Each player has:
-    - Health Points (HP): Starts at 2 and is reduced by losing battles.
+    - Health Points (HP): Starts at 30 and is reduced by losing battles.
     - Gold: Used to buy units, reroll shop units, and purchase experience.
     - Experience (EXP) & Level: Players level up by gaining EXP, increasing the number of units they can place on the field.
     - Streak System: Winning or losing streaks grant bonus gold.
@@ -49,24 +49,42 @@ The game mechanisms are described here:
 - Eliminated players are ranked based on their survival time.
 
 7. Decision-Making & Actions:
-- The basic actions you can choose from are:
+- The basic action tools:
     - 'buy_exp'  Buy experience to level up.
     - 'buy_unit' (requires `shop_index`)  Purchase a unit from the shop.
     - 'reroll'  Refresh the shop for a new selection of units.
     - 'sell_unit' (requires `source_type` and `index`)  Sell a unit from `bench` or `field`.
     - 'move_unit' (requires `source_type`, `source_index`, `target_type`, `target_index`)  Move a unit between `bench` and `field`.
     - 'none'  Take no action.
+"""
 
+SIMPLE_GAME_PROMPT = """
+You play as a strategist in a simplified autobattler game. The goal is to outlast other players by building strong teams and managing resources effectively.
+
+Objective: Survive automatic battles until only one player remains.
+
+Player Stats: Start with 30 HP, earn and spend gold, gain EXP to level up and place more units.
+
+Economy: Earn gold each round via base income, interest (1 gold per 10 saved), and win/loss streaks (up to 6 bonus gold).
+
+Units: Buy from a shared pool. Combine 3 identical units to upgrade (1.6 * stats).
+
+Combat: Units fight automatically. Losing a round deals 3+ damage.
+
+Actions: Buy units, EXP, reroll shop, move or sell units, or do nothing.
+
+Rounds: Alternate between preparation and battle. Players are matched randomly.
+
+Victory: Be the last player standing.
 """
 
 DIRECT_PROMPT = """
-You must call chosen action tools.
+Briefly tell me your plan. Then, you must call optimal action tools.
 """
 
 INTERNAL_COT = """
-Let's think step by step to decide the best action in the current situation.
-Do all the reasoning internally, and only provide the final answer.
-At the end of reasoning, you must call chosen action tools.
+Let's think internally step by step to decide the best action in the current situation, and only provide the final answer.
+At the end of reasoning, you must call optimal action tools.
 """
 
 EXTERNAL_COT = """
@@ -78,54 +96,6 @@ Let's think step by step to decide the best action in the current situation.
 2. Evaluate your economy
 3. Assess your team and shop
 4. Plan your actions
-
-At the end of reasoning, you must call chosen action tools.
-"""
-
-HEAVY_COT_PROMPT = """
-You are playing a simplified autobattler game. Your goal is to make smart decisions to survive longer and eventually win the game.
-
-Let's think step by step to decide the best action in the current situation.
-
-1. Analyze the current game state:
-- How much HP do you have left? Are you at risk of being eliminated soon?
-- How much gold do you have? Do you have enough to spend or should you save for interest?
-- What is your current level and how many units can you place on the field?
-- Do you have a win or lose streak? Can you use the streak to your advantage for bonus gold?
-- How strong is your current field composition? Do you need to strengthen your team?
-
-2. Evaluate your economy:
-- Do you have 10, 20, 30, 40, or 50 gold to get maximum interest income?
-- If you are below 10 gold, should you prioritize building a stronger board to survive or saving up gold for interest?
-
-3. Assess your team and shop:
-- Are there useful units in the shop that can improve your team? Should you buy them?
-- Do you need to reroll to find specific units to complete a synergy or upgrade to a stronger unit (2-star or 3-star)?
-- Is it better to buy experience (EXP) to level up and increase the number of units on the field, or improve shop odds for higher-tier units?
-
-4. Plan your actions:
-- If you need to upgrade your field, consider buying units from the shop or rerolling.
-- If you want to level up and place more units, buy EXP.
-- If you need more space or gold, sell units from your bench or field.
-- If your current setup is stable and you have enough HP, you may choose to take no action and save gold.
-
-After reasoning through these steps, choose the best action from the following options:
-- 'buy_exp'  
-- 'buy_unit' (provide `shop_index`)  
-- 'reroll'  
-- 'sell_unit' (provide `source_type` and `index`)  
-- 'move_unit' (provide `source_type`, `source_index`, `target_type`, `target_index`)  
-- 'none'
-
-Provide a step-by-step explanation of your decision-making process and clearly state the action you choose at the end.
-
-Example format:
-Step 1: [Explain the HP, gold, level, streak, etc.]
-Step 2: [Explain economic status and interest]
-Step 3: [Explain team strength and shop analysis]
-Step 4: [Explain action choice]
-
-Final Action: [Insert chosen action, e.g., 'buy_exp']
 
 At the end of reasoning, you must call chosen action tools.
 """

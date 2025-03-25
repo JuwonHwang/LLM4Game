@@ -48,13 +48,18 @@ class RandomAgentClient:
         async def response(data):
             print(f"{data}")
             try:
-                self.messages.append(json.loads(data))
+                self.messages.append(
+                    {
+                        "role": "user",
+                        "content": ". ".join(data["message"])
+                    }
+                )
             except Exception as e:
                 pass 
         
         @self.sio.event
         async def round_result(data):
-            self.round_result_list.append(data)
+            pass
             
         @self.sio.event
         async def game_end():
