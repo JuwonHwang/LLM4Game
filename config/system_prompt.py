@@ -25,11 +25,13 @@ The game mechanisms are described here:
     - Base income (turn-based): You can earn 5 gold for every round.
     - Interest (gold savings bonus): You get 1 additional gold for every 10 gold you have. (up to 5 gold when you have 50 gold)
     - Streak bonuses (winning or losing): You get extra gold when you are on a winning or losing streak. Up to 6 gold for 6 or more consecutive streaks.
+- Players earn gold by selling unimportant or unnecessary units. If you are running out of bench space, you can sell units you don't need and buy units from the shop.
 - Gold can be spent on:
     - Buying units from the shop.
     - Rerolling (refreshing the shop) for 2 gold.
     - Buying EXP for 4 gold to level up.
 - Higher-level players have increased chances of rolling rarer units.
+- The maximum number of field units is equal to the player level. For example, level 7 player can place 7 units on the field.
 
 5. Battle System:  
 - The game alternates between the preparation phase (buying and placing units) and the **battle phase**.  
