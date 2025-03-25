@@ -59,7 +59,7 @@ class AutoBattlerGame(Base):
                 i = len(self.players)
                 self.players.append(Player(f"{self.game_id}-{i}", f"{self.game_id}-{i}", pool=self.pool))
             for player in self.players:
-                player.gold = 0
+                player.gold = 10
                 player.bench.add(self.pool.sample(1))
             for player in self.players:
                 player.refresh_shop()

@@ -39,20 +39,7 @@ class Player(Base):
         self.hp -= amount
         
     def observe(self):
-        return {
-            "id": self.player_id,
-            "name": self.name,
-            "level": self.level,
-            "hp": self.hp,
-            "field": self.field.observe(),
-            "bench": self.bench.observe(),
-            "shop": self.shop.observe(),
-            "gold": self.gold,
-            "exp": self.exp,
-            "req_exp": self.get_required_exp(),
-            "unit_rate": self.get_appearance_rate(),
-            "streak": self.streak
-        }
+        return {}
         
     def to_json(self):
         return {
@@ -66,7 +53,7 @@ class Player(Base):
             "gold": self.gold,
             "exp": self.exp,
             "req_exp": self.get_required_exp(),
-            "unit_rate": self.get_appearance_rate(),
+            "unit_rate": self.get_appearance_rate_dict(),
             "streak": self.streak,
             "active": self.active,
         }
@@ -267,6 +254,12 @@ class Player(Base):
         elif self.level == 10:
             appearance_rate = [0.05, 0.10, 0.20, 0.40, 0.25]
         return appearance_rate
+    
+    def get_appearance_rate_dict(self):
+        v = {}
+        rate = self.get_appearance_rate()
+        for i, r in enumerate(rate):
+            v[f"level {i+1}"] = r
     
     def get_turn_gold(self, turn):
         turn_gold = 10
