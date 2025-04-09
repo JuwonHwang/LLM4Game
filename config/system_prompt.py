@@ -81,12 +81,12 @@ Victory: Be the last player standing.
 """
 
 DIRECT_PROMPT = """
-Briefly tell me your plan. Then, you must call optimal action tools.
+Briefly tell me your plan. You must call optimal action tools.
 """
 
 INTERNAL_COT = """
-Let's think internally step by step to decide the best action in the current situation, and only provide the final answer.
-At the end of reasoning, you must call optimal action tools.
+Let's plan internally step by step to decide the best action in the current situation.
+Then, briefly tell me your plan. You must call optimal action tools.
 """
 
 EXTERNAL_COT = """

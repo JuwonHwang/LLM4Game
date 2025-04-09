@@ -26,10 +26,11 @@ def load_api():
 API_KEY = load_api()
 
 class LLMAgentClient(RandomAgentClient):
-    def __init__(self, user_id, server_url, prompt_type='direct'):
+    def __init__(self, user_id, server_url, prompt_type='direct', message_limit=6):
         super().__init__(user_id, server_url)
+        self.message_limit = message_limit
         
-        self.system_prompt = GAME_PROMPT
+        self.system_prompt = GAME_PROMPT + json.dumps(self.unit_dict)
         if prompt_type == "direct":
             self.user_prompt = DIRECT_PROMPT
         elif prompt_type == "internal_cot":
@@ -39,10 +40,9 @@ class LLMAgentClient(RandomAgentClient):
         else:
             self.user_prompt = DIRECT_PROMPT
 
-        self.tools = []
-
         self.client = openai.AsyncOpenAI(api_key=API_KEY)
         self.answers = []
+        self.tools = []
 
     def save_answers(self, game_id):
         os.makedirs(os.path.join("llm_output", game_id), exist_ok=True)
@@ -52,15 +52,34 @@ class LLMAgentClient(RandomAgentClient):
     async def get_action(self, game_state, result=None):
         actions = [tool_none, tool_rerole, tool_buy_exp, tool_buy_unit, tool_sell_unit, tool_move_unit]
 
+        compact_game_state = {}
+        compact_game_state["all_player_ids"] = list(game_state['game']['players'].keys())
+        compact_game_state["player"] = game_state['player']
+
+        def to_sparse(container, dim=1):
+            sparse_container = {}
+            for i, unit in enumerate(container):
+                if unit:
+                    sparse_container[f"{i}"] = unit
+            return sparse_container
+        
+        compact_game_state["player"]['bench']['units'] = to_sparse(compact_game_state["player"]['bench']['units'])
+        compact_game_state["player"]['shop']['units'] = to_sparse(compact_game_state["player"]['shop']['units'])
+        compact_game_state['player']['field']['size'] = '28'
+        compact_game_state["player"]['field']['units'] = to_sparse(compact_game_state["player"]['field']['units'])
+        
         game_state_messages ={
             "role": "user",
-            "content": json.dumps(game_state)
+            "content": json.dumps(compact_game_state)
         }
         self.messages.append(game_state_messages)
         self.messages.append({"role": "user", "content": self.user_prompt})
 
-        # print(self.messages)
-        # Query OpenAI GPT model with function calling
+        if len(self.messages) > self.message_limit:
+            input_messages = self.messages[-self.message_limit:]
+        else:
+            input_messages = self.messages
+        
         while True:
             try:
                 response = await self.client.chat.completions.create(
@@ -68,7 +87,7 @@ class LLMAgentClient(RandomAgentClient):
                     store=False,
                     messages=[
                         {"role": "system", "content": self.system_prompt},
-                    ] + self.messages,
+                    ] + input_messages,
                     tools=actions + self.tools,
                 )
                 break
@@ -115,18 +134,21 @@ class LLMAgentClient(RandomAgentClient):
                 break
             await asyncio.sleep(0.1)
         while not self.end:
-            if self.state and self.state['user'] and self.state['user']['playing']:
-                if self.state["game"]["player"]["active"] and self.state['game']['player']['hp'] > 0:
-                    action_list = await self.get_action(self.state["game"])
-                    for action, params in action_list:
-                        self.messages.append({
-                            "role": "assistant",
-                            "content": f"tool name: {action}" + (f" arguments: {params}" if params else "")
-                        })
-                        if action != "none":
-                            await self.send_command(action, params)
-                            await asyncio.sleep(0.1)
-                    count += 1
+            try:
+                if self.state and self.state['user'] and self.state['user']['playing']:
+                    if self.state["game"]["player"]["active"] and self.state['game']['player']['hp'] > 0:
+                        action_list = await self.get_action(self.state["game"])
+                        for action, params in action_list:
+                            self.messages.append({
+                                "role": "assistant",
+                                "content": f"tool name: {action}" + (f" arguments: {params}" if params else "")
+                            })
+                            if action != "none":
+                                await self.send_command(action, params)
+                                await asyncio.sleep(0.1)
+                        count += 1
+            except:
+                break
             self.save_answers(game_id=game_id)
             await asyncio.sleep(1)
         await self.send_command("quit_game", None)

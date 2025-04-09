@@ -7,6 +7,8 @@ from pyautobattle.src import AutoBattlerGame
 import asyncio
 from datetime import datetime
 
+MAX_PLAYERS  = 4
+
 # Setup logging
 LOG_DIR = 'log'
 os.makedirs(LOG_DIR, exist_ok=True)
@@ -112,7 +114,7 @@ class GameServer:
             return False
         
         if game_id not in self.games.keys():
-            self.games[game_id] = AutoBattlerGame(game_id)
+            self.games[game_id] = AutoBattlerGame(game_id, max_players=MAX_PLAYERS)
             self.rooms[game_id] = []
             await self.log(sid, f'Game {game_id} created')
             await self.sio.emit('response', f'Game {game_id} created', to=sid)
@@ -124,14 +126,14 @@ class GameServer:
         self.rooms[game_id].append(sid)
         self.user_info[user_id]['game_id'] = game_id
         await self.send_user_state(sid)
-        if len(game.current_players) > 8:
+        if len(game.current_players) > game.max_players:
             await self.sio.emit('response', 'ERROR: Max # of players reached', to=sid)
             return False
         else:
             await self.sio.emit('response', f'You joined {game_id}', to=sid)
             await self.send_lobby_state(game_id)
             await self.send_home_state()
-            if len(game.current_players) == 8:
+            if len(game.current_players) == game.max_players:
                 if not game.running:
                     game.start()
                     asyncio.create_task(self.run_battle(game_id))

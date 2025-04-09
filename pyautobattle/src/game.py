@@ -24,13 +24,14 @@ class BattleState(Enum):
     INBATTLE = 'inbattle'
         
 class AutoBattlerGame(Base):
-    def __init__(self, game_id, unit_file='pyautobattle/data/unit.csv', synergy_file='pyautobattle/data/synergy.json', seed=0):
+    def __init__(self, game_id, unit_file='pyautobattle/data/unit.csv', synergy_file='pyautobattle/data/synergy.json', seed=0, max_players=8):
         self.game_id = game_id
         self.seed = seed
         self.pool = Pool(unit_file, synergy_file)
         self.round = 0
         self.timer = 0
         self.state_time = 10
+        self.max_players = max_players
         self.winner = None
         self.players: list[Player] = []
         self.current_players = set()
@@ -52,10 +53,10 @@ class AutoBattlerGame(Base):
     def start(self):
         if not self.running:
             # print("Players in ", {self.game_id}, ":", len(self.current_players))
-            assert len(self.current_players) <= 8
+            assert len(self.current_players) <= self.max_players
             for user_id in list(self.current_players):
                 self.players.append(Player(user_id, f"{user_id}", pool=self.pool))
-            while len(self.players) < 8:
+            while len(self.players) < self.max_players:
                 i = len(self.players)
                 self.players.append(Player(f"{self.game_id}-{i}", f"{self.game_id}-{i}", pool=self.pool))
             for player in self.players:

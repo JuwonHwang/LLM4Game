@@ -22,7 +22,7 @@ tool_expected_gold = {
     "type": "function",
     "function": {
         "name": "calculate_next_round_expected_gold",
-        "description": "Calculate the expected gold based on the next battle result based on the gold you currently have.",
+        "description": "Calculate the interest based on the gold you currently have.",
         "parameters": {
             "type": "object",
             "properties": {},

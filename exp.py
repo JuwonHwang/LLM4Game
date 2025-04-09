@@ -63,7 +63,7 @@ async def single_llm():
     print("All tasks completed.")
     return
 
-async def single_planner():
+async def tool_augment():
     agents = []
     tasks = []
 
@@ -108,6 +108,47 @@ async def cot_vs_direct():
     print("All tasks completed.")
     return
 
+async def full_agent(): 
+    agents = []
+    tasks = []
+
+    # Direct
+    client = LLMAgentClient(f"dir_agent", SERVER_URL, "direct")
+    agents.append(client)
+    tasks.append(asyncio.create_task(client.connect_to_server()))
+    await asyncio.sleep(0.4)
+    
+    # CoT
+    client = LLMAgentClient(f"cot_agent", SERVER_URL, "internal_cot")
+    agents.append(client)
+    tasks.append(asyncio.create_task(client.connect_to_server()))
+    await asyncio.sleep(0.4)
+
+    # tool augment direct
+    client = ToolAugmentedLLMAgentClient(f"tool_aug_dir_agent", SERVER_URL, "direct")
+    agents.append(client)
+    tasks.append(asyncio.create_task(client.connect_to_server()))
+    await asyncio.sleep(0.4)
+
+    # tool augment CoT
+    client = ToolAugmentedLLMAgentClient(f"tool_aug_cot_agent", SERVER_URL, "internal_cot")
+    agents.append(client)
+    tasks.append(asyncio.create_task(client.connect_to_server()))
+    await asyncio.sleep(0.4)
+    
+    i = 0
+    while len(agents) < 8:
+        print(f"random_agent{i+1} created")
+        client = RandomAgentClient(f"random_agent{i+1}", SERVER_URL)
+        agents.append(client)
+        tasks.append(asyncio.create_task(client.connect_to_server()))
+        await asyncio.sleep(0.4)
+        i += 1
+
+    await asyncio.gather(*tasks)  # Wait for all agents to complete
+    print("All tasks completed.")
+    return
+
 async def repeat(func, num):
     for i in range(num):
         print(f"Iter {i+1}")
@@ -118,6 +159,5 @@ async def repeat(func, num):
 # Ensure proper event loop management
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
-    # loop.run_until_complete(repeat(cot_vs_direct, 5))
-    loop.run_until_complete(single_planner())
+    loop.run_until_complete(repeat(full_agent, 8))
     print("End")
