@@ -1,0 +1,14 @@
+[project]
+name = "llm4game"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "aiohttp>=3.12.14",
+    "numpy>=2.0.2",
+    "openai>=1.95.1",
+    "pyqt6>=6.9.1",
+    "python-socketio>=5.13.0",
+    "socketio>=0.2.1",
+]
